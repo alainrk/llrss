@@ -68,7 +68,10 @@ func TestNewFeedReader(t *testing.T) {
 func TestFetchFeed(t *testing.T) {
 	server := setupTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockRSSFeed))
+		_, err := w.Write([]byte(mockRSSFeed))
+		if err != nil {
+			t.Fatalf("Failed to write response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -107,7 +110,10 @@ func TestFetchFeed(t *testing.T) {
 func TestFetchFeedInvalidXML(t *testing.T) {
 	server := setupTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockInvalidRSSFeed))
+		_, err := w.Write([]byte(mockInvalidRSSFeed))
+		if err != nil {
+			t.Fatalf("Failed to write response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -157,7 +163,10 @@ func TestFetchFeedTimeout(t *testing.T) {
 	server := setupTestServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(time.Second * 2) // Delay response
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(mockRSSFeed))
+		_, err := w.Write([]byte(mockRSSFeed))
+		if err != nil {
+			t.Fatalf("Failed to write response: %v", err)
+		}
 	}))
 	defer server.Close()
 

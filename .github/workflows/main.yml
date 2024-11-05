@@ -28,13 +28,13 @@ jobs:
         run: go mod download
 
       - name: Build
-        run: go build -v ./...
+        run: make build
 
       - name: Run vet
-        run: go vet ./...
+        run: make vet
 
       - name: Run tests with coverage
-        run: go test -v -race ./...
+        run: make test-ci
 
       - name: Check formatting
         run: |
@@ -48,4 +48,4 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
-          args: --timeout=5m
+          args: --timeout=5m --out-format=colored-line-number
