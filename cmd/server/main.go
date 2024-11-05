@@ -1,99 +1,77 @@
+// cmd/server/main.go
 package main
 
 import (
-	"encoding/xml"
-	"fmt"
-	"io"
+	"context"
+	"llrss/internal/handler"
+	"llrss/internal/repository"
+	"llrss/internal/service"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
-// RSS represents the root RSS feed structure
-type RSS struct {
-	XMLName xml.Name `xml:"rss"`
-	Channel Channel  `xml:"channel"`
-}
-
-// Channel represents the main content of the RSS feed
-type Channel struct {
-	Title       string `xml:"title"`
-	Link        string `xml:"link"`
-	Description string `xml:"description"`
-	Language    string `xml:"language"`
-	PubDate     string `xml:"pubDate"`
-	LastBuild   string `xml:"lastBuildDate"`
-	Items       []Item `xml:"item"`
-}
-
-// Item represents an individual RSS feed entry
-type Item struct {
-	Title       string `xml:"title"`
-	Link        string `xml:"link"`
-	Description string `xml:"description"`
-	PubDate     string `xml:"pubDate"`
-	GUID        string `xml:"guid"`
-}
-
-// FeedReader handles RSS feed operations
-type FeedReader struct {
-	client *http.Client
-}
-
-// NewFeedReader creates a new FeedReader instance
-func NewFeedReader() *FeedReader {
-	return &FeedReader{
-		client: &http.Client{
-			Timeout: 30 * time.Second,
-		},
-	}
-}
-
-// FetchFeed retrieves and parses an RSS feed from a given URL
-func (fr *FeedReader) FetchFeed(url string) (*RSS, error) {
-	resp, err := fr.client.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching feed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %v", err)
-	}
-
-	var rss RSS
-	if err := xml.Unmarshal(body, &rss); err != nil {
-		return nil, fmt.Errorf("error parsing RSS feed: %v", err)
-	}
-
-	return &rss, nil
-}
-
 func main() {
-	reader := NewFeedReader()
+	// Initialize repository
+	feedRepo := repository.NewMemoryFeedRepository()
 
-	// Example usage with a sample RSS feed URL
-	feedURL := "https://technicalwriting.dev/rss.xml"
-	feed, err := reader.FetchFeed(feedURL)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
+	// Initialize service
+	feedService := service.NewFeedService(feedRepo)
+
+	// Initialize handler
+	feedHandler := handler.NewFeedHandler(feedService)
+
+	// Initialize router
+	r := chi.NewRouter()
+
+	// Middleware
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	// Routes
+	r.Route("/api/v1", func(r chi.Router) {
+		feedHandler.RegisterRoutes(r)
+	})
+
+	// Create server
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
-	// Print feed information
-	fmt.Printf("Feed Title: %s\n", feed.Channel.Title)
-	fmt.Printf("Feed Description: %s\n", feed.Channel.Description)
-	fmt.Printf("\nLatest Items:\n")
+	// Start server in a goroutine
+	go func() {
+		log.Printf("Starting server on :8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
 
-	// Print the latest items
-	for i, item := range feed.Channel.Items {
-		fmt.Printf("\n%d. %s\n", i+1, item.Title)
-		fmt.Printf("   Link: %s\n", item.Link)
-		fmt.Printf("   Published: %s\n", item.PubDate)
-		fmt.Printf("   Description: %s\n", item.Description)
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
 	}
+
+	log.Println("Server stopped gracefully")
 }
