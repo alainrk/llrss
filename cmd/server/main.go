@@ -18,26 +18,18 @@ import (
 )
 
 func main() {
-	// Initialize repository
 	feedRepo := repository.NewMemoryFeedRepository()
-
-	// Initialize service
 	feedService := service.NewFeedService(feedRepo)
-
-	// Initialize handler
 	feedHandler := handler.NewFeedHandler(feedService)
 
-	// Initialize router
 	r := chi.NewRouter()
 
-	// Middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	// Routes
 	r.Route("/api/v1", func(r chi.Router) {
 		feedHandler.RegisterRoutes(r)
 	})
