@@ -18,7 +18,10 @@ import (
 )
 
 func main() {
-	feedRepo := repository.NewMemoryFeedRepository()
+	feedRepo, err := repository.NewJSONFileFeedRepository("feeds.json")
+	if err != nil {
+		log.Fatalf("Failed to create feed repository: %v", err)
+	}
 	feedService := service.NewFeedService(feedRepo)
 	feedHandler := handler.NewFeedHandler(feedService)
 
