@@ -24,9 +24,14 @@ no-dirty:
 # QUALITY CONTROL
 # ==================================================================================== #
 
+## lint: run all linters
+.PHONY: lint
+lint:
+	golangci-lint run --timeout 5m --allow-parallel-runners --sort-results
+
 ## test: run all tests colorized
 # .PHONY: test
-test:
+test: lint
 	./test.sh
 
 ## test-ci: run all tests in CI
