@@ -40,6 +40,14 @@ func (m *mockService) GetFeed(ctx context.Context, id string) (*models.Feed, err
 	return feed, nil
 }
 
+func (m *mockService) GetFeedByURL(ctx context.Context, url string) (*models.Feed, error) {
+	feed, ok := m.feeds[url]
+	if !ok {
+		return nil, repository.ErrFeedNotFound
+	}
+	return feed, nil
+}
+
 func (m *mockService) ListFeeds(ctx context.Context) ([]models.Feed, error) {
 	feeds := make([]models.Feed, 0, len(m.feeds))
 	for _, feed := range m.feeds {
@@ -79,7 +87,7 @@ func setupTestHandler() (*chi.Mux, *mockService) {
 func TestListFeeds(t *testing.T) {
 	r, _ := setupTestHandler()
 
-	req := httptest.NewRequest("GET", "/feeds", nil)
+	req := httptest.NewRequest(http.MethodGet, "/feeds", nil)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -100,7 +108,7 @@ func TestAddFeed(t *testing.T) {
 	reqBody := map[string]string{"url": "http://example.com/feed.xml"}
 	body, _ := json.Marshal(reqBody)
 
-	req := httptest.NewRequest("POST", "/feeds", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/feeds", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -124,7 +132,7 @@ func TestGetFeed(t *testing.T) {
 
 	feed, _ := mockSvc.AddFeed(context.Background(), "http://example.com/feed.xml")
 
-	req := httptest.NewRequest("GET", "/feeds/"+feed.ID, nil)
+	req := httptest.NewRequest(http.MethodGet, "/feeds/"+feed.ID, nil)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)

@@ -5,13 +5,13 @@ import (
 	"time"
 )
 
-// RSS represents an RSS feed
+// RSS represents an RSS feed.
 type RSS struct {
 	XMLName xml.Name `xml:"rss"`
 	Channel Channel  `xml:"channel"`
 }
 
-// Channel represents the RSS channel
+// Channel represents the RSS channel.
 type Channel struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
@@ -22,7 +22,7 @@ type Channel struct {
 	Items       []Item `xml:"item"`
 }
 
-// Item represents an RSS item
+// Item represents an RSS item.
 type Item struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
@@ -31,7 +31,7 @@ type Item struct {
 	GUID        string `xml:"guid"`
 }
 
-// Feed represents a feed in our system
+// Feed represents a feed in our system.
 type Feed struct {
 	ID          string    `json:"id"`
 	URL         string    `json:"url"`

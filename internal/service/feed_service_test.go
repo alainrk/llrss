@@ -11,17 +11,22 @@ import (
 	"testing"
 )
 
-// MockFeedRepository implements FeedRepository interface for testing
+// MockFeedRepository implements FeedRepository interface for testing.
 type MockFeedRepository struct {
-	getFeedFunc    func(ctx context.Context, id string) (*models.Feed, error)
-	listFeedsFunc  func(ctx context.Context) ([]models.Feed, error)
-	saveFeedFunc   func(ctx context.Context, feed *models.Feed) error
-	deleteFeedFunc func(ctx context.Context, id string) error
-	updateFeedFunc func(ctx context.Context, feed *models.Feed) error
+	getFeedFunc      func(ctx context.Context, id string) (*models.Feed, error)
+	getFeedByURLFunc func(ctx context.Context, url string) (*models.Feed, error)
+	listFeedsFunc    func(ctx context.Context) ([]models.Feed, error)
+	saveFeedFunc     func(ctx context.Context, feed *models.Feed) error
+	deleteFeedFunc   func(ctx context.Context, id string) error
+	updateFeedFunc   func(ctx context.Context, feed *models.Feed) error
 }
 
 func (m *MockFeedRepository) GetFeed(ctx context.Context, id string) (*models.Feed, error) {
 	return m.getFeedFunc(ctx, id)
+}
+
+func (m *MockFeedRepository) GetFeedByURL(ctx context.Context, url string) (*models.Feed, error) {
+	return m.getFeedByURLFunc(ctx, url)
 }
 
 func (m *MockFeedRepository) ListFeeds(ctx context.Context) ([]models.Feed, error) {
@@ -40,7 +45,7 @@ func (m *MockFeedRepository) UpdateFeed(ctx context.Context, feed *models.Feed) 
 	return m.updateFeedFunc(ctx, feed)
 }
 
-// MockRoundTripper implements http.RoundTripper for testing
+// MockRoundTripper implements http.RoundTripper for testing.
 type MockRoundTripper struct {
 	roundTripFunc func(req *http.Request) (*http.Response, error)
 }

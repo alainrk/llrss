@@ -29,6 +29,11 @@ no-dirty:
 lint:
 	golangci-lint run --timeout 5m --allow-parallel-runners --sort-results
 
+## lint-fix: try to fix all lint errors
+.PHONY: lint-fix
+lint-fix:
+	golangci-lint run --fix
+
 ## test: run all tests colorized
 # .PHONY: test
 test: lint

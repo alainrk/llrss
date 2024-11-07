@@ -61,10 +61,11 @@ func main() {
 
 	log.Println("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	// TODO: Add timeout cancellable context
+	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(context.TODO()); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 

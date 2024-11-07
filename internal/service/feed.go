@@ -14,6 +14,7 @@ import (
 type FeedService interface {
 	FetchFeed(ctx context.Context, url string) (*models.Feed, error)
 	GetFeed(ctx context.Context, id string) (*models.Feed, error)
+	GetFeedByURL(ctx context.Context, url string) (*models.Feed, error)
 	ListFeeds(ctx context.Context) ([]models.Feed, error)
 	AddFeed(ctx context.Context, url string) (*models.Feed, error)
 	DeleteFeed(ctx context.Context, id string) error
@@ -73,6 +74,10 @@ func (s *feedService) FetchFeed(ctx context.Context, url string) (*models.Feed, 
 
 func (s *feedService) GetFeed(ctx context.Context, id string) (*models.Feed, error) {
 	return s.repo.GetFeed(ctx, id)
+}
+
+func (s *feedService) GetFeedByURL(ctx context.Context, url string) (*models.Feed, error) {
+	return s.repo.GetFeedByURL(ctx, url)
 }
 
 func (s *feedService) ListFeeds(ctx context.Context) ([]models.Feed, error) {

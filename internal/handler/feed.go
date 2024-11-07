@@ -34,7 +34,11 @@ func (h *FeedHandler) ListFeeds(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(feeds)
+	err = json.NewEncoder(w).Encode(feeds)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *FeedHandler) AddFeed(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +58,12 @@ func (h *FeedHandler) AddFeed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(feed)
+
+	err = json.NewEncoder(w).Encode(feed)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *FeedHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +74,11 @@ func (h *FeedHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(feed)
+	err = json.NewEncoder(w).Encode(feed)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *FeedHandler) DeleteFeed(w http.ResponseWriter, r *http.Request) {
@@ -92,5 +105,9 @@ func (h *FeedHandler) UpdateFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(feed)
+	err := json.NewEncoder(w).Encode(feed)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

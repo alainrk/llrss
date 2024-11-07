@@ -14,6 +14,7 @@ import (
 
 type FeedRepository interface {
 	GetFeed(ctx context.Context, id string) (*models.Feed, error)
+	GetFeedByURL(ctx context.Context, url string) (*models.Feed, error)
 	ListFeeds(ctx context.Context) ([]models.Feed, error)
 	SaveFeed(ctx context.Context, feed *models.Feed) error
 	DeleteFeed(ctx context.Context, id string) error
@@ -21,9 +22,9 @@ type FeedRepository interface {
 }
 
 type jsonFileFeedRepository struct {
-	mu       sync.RWMutex
 	filePath string
 	dir      string
+	mu       sync.RWMutex
 }
 
 type fileData struct {
@@ -32,7 +33,7 @@ type fileData struct {
 
 func NewJSONFileFeedRepository(filePath string) (FeedRepository, error) {
 	dir := filepath.Dir(filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
 
@@ -105,6 +106,25 @@ func (r *jsonFileFeedRepository) writeFile(fd fileData) error {
 	}
 
 	return nil
+}
+
+func (r *jsonFileFeedRepository) GetFeedByURL(_ context.Context, url string) (*models.Feed, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	fd, err := r.readFile()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, feed := range fd.Feeds {
+		if feed.URL == url {
+			feedCopy := feed // Create a copy
+			return &feedCopy, nil
+		}
+	}
+
+	return nil, fmt.Errorf("feed not found: %s", url)
 }
 
 func (r *jsonFileFeedRepository) GetFeed(_ context.Context, id string) (*models.Feed, error) {
