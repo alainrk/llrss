@@ -124,7 +124,7 @@ func (r *jsonFileFeedRepository) GetFeedByURL(_ context.Context, url string) (*m
 		}
 	}
 
-	return nil, fmt.Errorf("feed not found: %s", url)
+	return nil, nil
 }
 
 func (r *jsonFileFeedRepository) GetFeed(_ context.Context, id string) (*models.Feed, error) {
@@ -143,7 +143,7 @@ func (r *jsonFileFeedRepository) GetFeed(_ context.Context, id string) (*models.
 		}
 	}
 
-	return nil, fmt.Errorf("feed not found: %s", id)
+	return nil, nil
 }
 
 func (r *jsonFileFeedRepository) ListFeeds(_ context.Context) ([]models.Feed, error) {
@@ -247,7 +247,7 @@ func (r *jsonFileFeedRepository) UpdateFeed(_ context.Context, feed *models.Feed
 	}
 
 	if !found {
-		return fmt.Errorf("feed not found: %s", feed.ID)
+		return ErrFeedNotFound
 	}
 
 	return r.writeFile(fd)

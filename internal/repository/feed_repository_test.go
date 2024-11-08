@@ -40,28 +40,38 @@ func TestJSONFileFeedRepository(t *testing.T) {
 
 	// Test saving new feed
 	t.Run("save feed", func(t *testing.T) {
-		feed := &models.Feed{
+		feed1 := &models.Feed{
 			URL:         "http://example.com",
 			Title:       "Test Feed",
 			Description: "Test Description",
 			LastFetch:   time.Now().UTC(),
 		}
+		feed2 := &models.Feed{
+			URL:         "http://another.example.com",
+			Title:       "Test Another Feed",
+			Description: "Test Another Description",
+			LastFetch:   time.Now().UTC(),
+		}
 
-		err := repo.SaveFeed(ctx, feed)
+		err := repo.SaveFeed(ctx, feed1)
 		if err != nil {
 			t.Errorf("SaveFeed failed: %v", err)
 		}
-		if feed.ID == "" {
+		if feed1.ID == "" {
 			t.Error("Expected ID to be generated")
 		}
 
-		// Try to get the saved feed
-		savedFeed, err := repo.GetFeed(ctx, feed.ID)
+		err = repo.SaveFeed(ctx, feed2)
+		if err != nil {
+			t.Errorf("SaveFeed2 failed: %v", err)
+		}
+
+		savedFeed, err := repo.GetFeed(ctx, feed1.ID)
 		if err != nil {
 			t.Errorf("GetFeed failed: %v", err)
 		}
-		if savedFeed.Title != feed.Title {
-			t.Errorf("Expected title %q, got %q", feed.Title, savedFeed.Title)
+		if savedFeed.Title != feed1.Title {
+			t.Errorf("Expected title %q, got %q", feed1.Title, savedFeed.Title)
 		}
 	})
 
@@ -102,14 +112,24 @@ func TestJSONFileFeedRepository(t *testing.T) {
 			t.Fatal("Expected at least one feed")
 		}
 
-		err = repo.DeleteFeed(ctx, feeds[0].ID)
+		id := feeds[0].ID
+
+		err = repo.DeleteFeed(ctx, id)
 		if err != nil {
 			t.Errorf("DeleteFeed failed: %v", err)
 		}
 
-		_, err = repo.GetFeed(ctx, feeds[0].ID)
-		if err == nil {
-			t.Error("Expected error getting deleted feed")
+		err = repo.DeleteFeed(ctx, id)
+		if err != nil {
+			t.Error("Not expected error deleting not existing feed, should fail silently")
+		}
+
+		f, err := repo.GetFeed(ctx, id)
+		if err != nil {
+			t.Error("Not expected error deleting not existing feed, should fail silently")
+		}
+		if f != nil {
+			t.Error("Expected empty feed on not existing GetFeed, got:", f)
 		}
 	})
 

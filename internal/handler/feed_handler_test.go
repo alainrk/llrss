@@ -8,6 +8,7 @@ import (
 	"llrss/internal/repository"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -56,14 +57,14 @@ func (m *mockService) ListFeeds(ctx context.Context) ([]models.Feed, error) {
 	return feeds, nil
 }
 
-func (m *mockService) AddFeed(ctx context.Context, url string) (*models.Feed, error) {
+func (m *mockService) AddFeed(ctx context.Context, url string) (string, error) {
 	feed := &models.Feed{
 		ID:    "test-id",
 		URL:   url,
 		Title: "Test Feed",
 	}
 	m.feeds[feed.ID] = feed
-	return feed, nil
+	return feed.ID, nil
 }
 
 func (m *mockService) DeleteFeed(ctx context.Context, id string) error {
@@ -117,22 +118,21 @@ func TestAddFeed(t *testing.T) {
 		t.Errorf("Expected status code %d, got %d", http.StatusCreated, w.Code)
 	}
 
-	var feed models.Feed
-	if err := json.NewDecoder(w.Body).Decode(&feed); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
+	ID := strings.TrimSpace(w.Body.String())
 
-	if feed.URL != "http://example.com/feed.xml" {
-		t.Errorf("Expected URL %s, got %s", "http://example.com/feed.xml", feed.URL)
+	if ID == "" {
+		t.Errorf("Expected feed ID, got empty string")
 	}
 }
+
+// TODO: Test already added feed URL
 
 func TestGetFeed(t *testing.T) {
 	r, mockSvc := setupTestHandler()
 
-	feed, _ := mockSvc.AddFeed(context.Background(), "http://example.com/feed.xml")
+	ID, _ := mockSvc.AddFeed(context.Background(), "http://example.com/feed.xml")
 
-	req := httptest.NewRequest(http.MethodGet, "/feeds/"+feed.ID, nil)
+	req := httptest.NewRequest(http.MethodGet, "/feeds/"+ID, nil)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -146,7 +146,7 @@ func TestGetFeed(t *testing.T) {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	if responseFeed.ID != feed.ID {
-		t.Errorf("Expected feed ID %s, got %s", feed.ID, responseFeed.ID)
+	if responseFeed.ID != ID {
+		t.Errorf("Expected feed ID %s, got %s", ID, responseFeed.ID)
 	}
 }

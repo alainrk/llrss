@@ -16,7 +16,7 @@ type FeedService interface {
 	GetFeed(ctx context.Context, id string) (*models.Feed, error)
 	GetFeedByURL(ctx context.Context, url string) (*models.Feed, error)
 	ListFeeds(ctx context.Context) ([]models.Feed, error)
-	AddFeed(ctx context.Context, url string) (*models.Feed, error)
+	AddFeed(ctx context.Context, url string) (string, error)
 	DeleteFeed(ctx context.Context, id string) error
 	UpdateFeed(ctx context.Context, feed *models.Feed) error
 }
@@ -84,17 +84,26 @@ func (s *feedService) ListFeeds(ctx context.Context) ([]models.Feed, error) {
 	return s.repo.ListFeeds(ctx)
 }
 
-func (s *feedService) AddFeed(ctx context.Context, url string) (*models.Feed, error) {
+// AddFeed adds a new feed by url and returns its ID.
+func (s *feedService) AddFeed(ctx context.Context, url string) (string, error) {
+	f, err := s.repo.GetFeedByURL(ctx, url)
+	if err != nil {
+		return "", fmt.Errorf("get feed by URL: %w", err)
+	}
+	if f != nil {
+		return f.ID, nil
+	}
+
 	feed, err := s.FetchFeed(ctx, url)
 	if err != nil {
-		return nil, fmt.Errorf("fetch feed: %w", err)
+		return "", fmt.Errorf("fetch feed: %w", err)
 	}
 
 	if err := s.repo.SaveFeed(ctx, feed); err != nil {
-		return nil, fmt.Errorf("save feed: %w", err)
+		return "", fmt.Errorf("save feed: %w", err)
 	}
 
-	return feed, nil
+	return feed.ID, nil
 }
 
 func (s *feedService) DeleteFeed(ctx context.Context, id string) error {

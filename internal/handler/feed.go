@@ -51,19 +51,14 @@ func (h *FeedHandler) AddFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feed, err := h.feedService.AddFeed(r.Context(), req.URL)
+	ID, err := h.feedService.AddFeed(r.Context(), req.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-
-	err = json.NewEncoder(w).Encode(feed)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.Write([]byte(ID))
 }
 
 func (h *FeedHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
