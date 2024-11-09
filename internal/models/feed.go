@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-// RSS represents an RSS feed.
 type RSS struct {
 	XMLName          xml.Name `xml:"rss"`
 	Version          string   `xml:"version,attr"`
@@ -13,7 +12,6 @@ type RSS struct {
 	Channel          Channel  `xml:"channel"`
 }
 
-// Channel represents the RSS channel.
 type Channel struct {
 	TextInput      *TextInput
 	Image          *Image
@@ -38,7 +36,6 @@ type Channel struct {
 	TTL            int      `xml:"ttl,omitempty"`
 }
 
-// Image represents the RSS image.
 type Image struct {
 	XMLName xml.Name `xml:"image"`
 	URL     string   `xml:"url"`
@@ -48,7 +45,6 @@ type Image struct {
 	Height  int      `xml:"height,omitempty"`
 }
 
-// TextInput represents the RSS text input.
 type TextInput struct {
 	XMLName     xml.Name `xml:"textInput"`
 	Title       string   `xml:"title"`
@@ -57,51 +53,45 @@ type TextInput struct {
 	Link        string   `xml:"link"`
 }
 
-// Content represents the content of an RSS item.
 type Content struct {
 	XMLName xml.Name `xml:"content:encoded"`
 	Content string   `xml:",cdata"`
 }
 
-// Item represents an RSS item.
 type Item struct {
-	XMLName     xml.Name `xml:"item"`
-	Title       string   `xml:"title"`       // required
-	Link        string   `xml:"link"`        // required
-	Description string   `xml:"description"` // required
-	Content     *Content
-	Author      string `xml:"author,omitempty"`
-	Category    string `xml:"category,omitempty"`
-	Comments    string `xml:"comments,omitempty"`
-	Enclosure   *RssEnclosure
-	GUID        *RssGUID // Id used
-	PubDate     string   `xml:"pubDate,omitempty"` // created or updated
-	Source      string   `xml:"source,omitempty"`
+	XMLName     xml.Name      `xml:"item" gorm:"-"`
+	Title       string        `xml:"title" gorm:"not null"`
+	Link        string        `xml:"link" gorm:"not null"`
+	Description string        `xml:"description" gorm:"type:text"`
+	Content     *Content      `gorm:"-"`
+	Author      string        `xml:"author,omitempty"`
+	Category    string        `xml:"category,omitempty"`
+	Comments    string        `xml:"comments,omitempty"`
+	Enclosure   *RssEnclosure `gorm:"-"`
+	GUID        *RssGUID      `gorm:"-"`
+	PubDate     string        `xml:"pubDate,omitempty"`
+	Source      string        `xml:"source,omitempty"`
+	FeedID      string        `gorm:"index" json:"-"`
 }
 
-// Feed represents a feed in our system.
 type Feed struct {
-	ID          string    `json:"id"`
-	URL         string    `json:"url"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
+	ID          string    `json:"id" gorm:"primaryKey"`
+	URL         string    `json:"url" gorm:"uniqueIndex;not null"`
+	Title       string    `json:"title" gorm:"not null"`
+	Description string    `json:"description" gorm:"type:text"`
 	LastFetch   time.Time `json:"last_fetch"`
-	Items       []Item    `json:"items"`
+	Items       []Item    `json:"items" gorm:"foreignKey:FeedID"`
 }
 
-// RssEnclosure represents the RSS enclosure.
 type RssEnclosure struct {
-	// RSS 2.0 <enclosure url="http://example.com/file.mp3" length="123456789" type="audio/mpeg" />
 	XMLName xml.Name `xml:"enclosure"`
 	URL     string   `xml:"url,attr"`
 	Length  string   `xml:"length,attr"`
 	Type    string   `xml:"type,attr"`
 }
 
-// RssGUID represents the RSS guid.
 type RssGUID struct {
-	// RSS 2.0 <guid isPermaLink="true">http://inessential.com/2002/09/01.php#a2</guid>
 	XMLName     xml.Name `xml:"guid"`
 	ID          string   `xml:",chardata"`
-	IsPermaLink string   `xml:"isPermaLink,attr,omitempty"` // "true", "false", or an empty string
+	IsPermaLink string   `xml:"isPermaLink,attr,omitempty"`
 }
