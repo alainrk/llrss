@@ -13,11 +13,6 @@ type RSS struct {
 	Channel          Channel  `xml:"channel"`
 }
 
-type Content struct {
-	XMLName xml.Name `xml:"content:encoded"`
-	Content string   `xml:",cdata"`
-}
-
 // Channel represents the RSS channel.
 type Channel struct {
 	TextInput      *TextInput
@@ -60,6 +55,12 @@ type TextInput struct {
 	Description string   `xml:"description"`
 	Name        string   `xml:"name"`
 	Link        string   `xml:"link"`
+}
+
+// Content represents the content of an RSS item.
+type Content struct {
+	XMLName xml.Name `xml:"content:encoded"`
+	Content string   `xml:",cdata"`
 }
 
 // Item represents an RSS item.
