@@ -4,7 +4,7 @@ package main
 import (
 	"context"
 	"llrss/internal/handler"
-	"llrss/internal/repository"
+	"llrss/internal/repository/json"
 	"llrss/internal/service"
 	"log"
 	"net/http"
@@ -18,10 +18,25 @@ import (
 )
 
 func main() {
-	feedRepo, err := repository.NewJSONFileFeedRepository("feeds.json")
+	// dbConfig := config.NewDatabaseConfig()
+	// db, err := config.InitDatabase(dbConfig)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	//
+	// // Auto migrate the schema
+	// if err := db.AutoMigrate(&models.Feed{}, &models.Item{}); err != nil {
+	// 	log.Fatal("failed to migrate database:", err)
+	// }
+
+	// Initialize repository
+	// feedRepo := repository.NewGormFeedRepository(db)
+
+	feedRepo, err := json.NewJSONFileFeedRepository("feeds.json")
 	if err != nil {
 		log.Fatalf("Failed to create feed repository: %v", err)
 	}
+
 	feedService := service.NewFeedService(feedRepo)
 	feedHandler := handler.NewFeedHandler(feedService)
 

@@ -9,6 +9,7 @@
 *.dylib
 __debug_bin*
 feeds.json
+feeds.db
 
 # Test binary, built with `go test -c`
 *.test
