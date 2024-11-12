@@ -69,8 +69,6 @@ func (s *feedService) FetchFeed(ctx context.Context, url string) (*models.Feed, 
 		LastFetch:   time.Now(),
 		Items:       rss.Channel.Items,
 	}
-	// TODO: Remove this
-	fmt.Printf("items: %+v\n", rss.Channel.Items)
 
 	return feed, nil
 }

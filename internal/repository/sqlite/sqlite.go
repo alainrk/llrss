@@ -64,6 +64,7 @@ func (r *gormFeedRepository) SaveFeed(_ context.Context, feed *models.Feed) (str
 	if feed.ID == "" {
 		feed.ID = uuid.New().String()
 	}
+
 	res := r.db.Create(feed)
 	if res.Error != nil {
 		return "", res.Error

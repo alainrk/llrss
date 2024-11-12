@@ -63,7 +63,7 @@ type Item struct {
 	XMLName     xml.Name      `xml:"item" gorm:"-"`
 	Title       string        `xml:"title" gorm:"not null"`
 	Link        string        `xml:"link" gorm:"not null"`
-	Description string        `xml:"description" gorm:"type:text"`
+	Description string        `xml:"description"`
 	Content     *Content      `gorm:"-"`
 	Author      string        `xml:"author,omitempty"`
 	Category    string        `xml:"category,omitempty"`
@@ -72,16 +72,16 @@ type Item struct {
 	GUID        *RssGUID      `gorm:"-"`
 	PubDate     string        `xml:"pubDate,omitempty"`
 	Source      string        `xml:"source,omitempty"`
-	FeedID      string        `gorm:"index" json:"-"`
+	FeedID      string        `gorm:"index"`
 }
 
 type Feed struct {
-	ID          string    `json:"id" gorm:"primaryKey"`
-	URL         string    `json:"url" gorm:"uniqueIndex;not null"`
-	Title       string    `json:"title" gorm:"not null"`
-	Description string    `json:"description" gorm:"type:text"`
-	LastFetch   time.Time `json:"last_fetch"`
-	Items       []Item    `json:"items" gorm:"foreignKey:FeedID"`
+	ID          string `gorm:"primaryKey"`
+	URL         string `gorm:"uniqueIndex;not null"`
+	Title       string `gorm:"not null"`
+	Description string `gorm:"type:text" xml:"description"`
+	LastFetch   time.Time
+	Items       []Item `gorm:"foreignKey:FeedID"`
 }
 
 type RssEnclosure struct {
