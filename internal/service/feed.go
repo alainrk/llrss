@@ -96,11 +96,12 @@ func (s *feedService) AddFeed(ctx context.Context, url string) (string, error) {
 		return "", fmt.Errorf("fetch feed: %w", err)
 	}
 
-	if err := s.repo.SaveFeed(ctx, feed); err != nil {
+	id, err := s.repo.SaveFeed(ctx, feed)
+	if err != nil {
 		return "", fmt.Errorf("save feed: %w", err)
 	}
 
-	return feed.ID, nil
+	return id, nil
 }
 
 func (s *feedService) DeleteFeed(ctx context.Context, id string) error {

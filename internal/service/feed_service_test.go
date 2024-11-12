@@ -17,7 +17,7 @@ type MockFeedRepository struct {
 	getFeedFunc      func(ctx context.Context, id string) (*models.Feed, error)
 	getFeedByURLFunc func(ctx context.Context, url string) (*models.Feed, error)
 	listFeedsFunc    func(ctx context.Context) ([]models.Feed, error)
-	saveFeedFunc     func(ctx context.Context, feed *models.Feed) error
+	saveFeedFunc     func(ctx context.Context, feed *models.Feed) (string, error)
 	deleteFeedFunc   func(ctx context.Context, id string) error
 	updateFeedFunc   func(ctx context.Context, feed *models.Feed) error
 }
@@ -34,7 +34,7 @@ func (m *MockFeedRepository) ListFeeds(ctx context.Context) ([]models.Feed, erro
 	return m.listFeedsFunc(ctx)
 }
 
-func (m *MockFeedRepository) SaveFeed(ctx context.Context, feed *models.Feed) error {
+func (m *MockFeedRepository) SaveFeed(ctx context.Context, feed *models.Feed) (string, error) {
 	return m.saveFeedFunc(ctx, feed)
 }
 
@@ -372,13 +372,13 @@ func TestAddFeed(t *testing.T) {
 					}
 					return nil, fmt.Errorf("not found")
 				},
-				saveFeedFunc: func(ctx context.Context, feed *models.Feed) error {
+				saveFeedFunc: func(ctx context.Context, feed *models.Feed) (string, error) {
 					if tt.existingFeed != nil {
 						t.Error("save called when feed already exists")
-						return fmt.Errorf("feed already exists")
+						return "", fmt.Errorf("feed already exists")
 					}
 					feed.ID = "new-id" // Simulate ID generation
-					return nil
+					return "new-id", nil
 				},
 			}
 
