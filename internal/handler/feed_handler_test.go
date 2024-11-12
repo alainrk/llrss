@@ -77,6 +77,11 @@ func (m *mockService) UpdateFeed(ctx context.Context, feed *models.Feed) error {
 	return nil
 }
 
+func (m *mockService) Nuke(ctx context.Context) error {
+	m.feeds = make(map[string]*models.Feed)
+	return nil
+}
+
 func setupTestHandler() (*chi.Mux, *mockService) {
 	r := chi.NewRouter()
 	mockSvc := newMockService()

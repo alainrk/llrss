@@ -59,6 +59,7 @@ type Content struct {
 }
 
 type Item struct {
+	// TODO: ID UUID
 	XMLName     xml.Name      `xml:"item" gorm:"-"`
 	Title       string        `xml:"title" gorm:"not null"`
 	Link        string        `xml:"link" gorm:"not null"`

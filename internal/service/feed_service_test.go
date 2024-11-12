@@ -20,6 +20,7 @@ type MockFeedRepository struct {
 	saveFeedFunc     func(ctx context.Context, feed *models.Feed) (string, error)
 	deleteFeedFunc   func(ctx context.Context, id string) error
 	updateFeedFunc   func(ctx context.Context, feed *models.Feed) error
+	nukeFunc         func(ctx context.Context) error
 }
 
 func (m *MockFeedRepository) GetFeed(ctx context.Context, id string) (*models.Feed, error) {
@@ -44,6 +45,10 @@ func (m *MockFeedRepository) DeleteFeed(ctx context.Context, id string) error {
 
 func (m *MockFeedRepository) UpdateFeed(ctx context.Context, feed *models.Feed) error {
 	return m.updateFeedFunc(ctx, feed)
+}
+
+func (m *MockFeedRepository) Nuke(ctx context.Context) error {
+	return m.nukeFunc(ctx)
 }
 
 // MockRoundTripper implements http.RoundTripper for testing.
@@ -516,4 +521,50 @@ func TestUpdateFeed(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNuke(t *testing.T) {
+	ctx := context.Background()
+	feeds := []models.Feed{
+		{ID: "1", Title: "Feed 1"},
+		{ID: "2", Title: "Feed 2"},
+	}
+	// items := []models.Item{
+	// 	{Title: "Item 1", FeedID: "1"},
+	// 	{Title: "Item 2", FeedID: "1"},
+	// 	{Title: "Item 3", FeedID: "2"},
+	// }
+
+	mockRepo := &MockFeedRepository{
+		listFeedsFunc: func(ctx context.Context) ([]models.Feed, error) {
+			return feeds, nil
+		},
+		nukeFunc: func(ctx context.Context) error {
+			feeds = []models.Feed{}
+			// items = []models.Item{}
+			return nil
+		},
+	}
+
+	service := NewFeedService(mockRepo)
+
+	err := service.Nuke(ctx)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	feedsRes, err := service.ListFeeds(ctx)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	if len(feedsRes) != 0 {
+		t.Errorf("expected 0 feeds, got %d", len(feedsRes))
+	}
+
+	// TODO: Implement test for single items
+	// itemsRes, err := service.ListItems(ctx)
+	// if err != nil {
+	// 	t.Error("unexpected error:", err)
+	// }
 }

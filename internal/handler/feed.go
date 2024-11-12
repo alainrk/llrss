@@ -25,6 +25,7 @@ func (h *FeedHandler) RegisterRoutes(r chi.Router) {
 	r.Get("/feeds/{id}", h.GetFeed)
 	r.Delete("/feeds/{id}", h.DeleteFeed)
 	r.Put("/feeds/{id}", h.UpdateFeed)
+	r.Delete("/nuke", h.Nuke)
 }
 
 func (h *FeedHandler) ListFeeds(w http.ResponseWriter, r *http.Request) {
@@ -105,4 +106,13 @@ func (h *FeedHandler) UpdateFeed(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *FeedHandler) Nuke(w http.ResponseWriter, r *http.Request) {
+	if err := h.feedService.Nuke(r.Context()); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

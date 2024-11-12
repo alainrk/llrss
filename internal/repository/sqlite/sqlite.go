@@ -18,6 +18,7 @@ type FeedRepository interface {
 	SaveFeed(ctx context.Context, feed *models.Feed) (string, error)
 	DeleteFeed(ctx context.Context, id string) error
 	UpdateFeed(ctx context.Context, feed *models.Feed) error
+	Nuke(ctx context.Context) error
 }
 
 type gormFeedRepository struct {
@@ -86,4 +87,16 @@ func (r *gormFeedRepository) UpdateFeed(_ context.Context, feed *models.Feed) er
 		}
 		return nil
 	})
+}
+
+func (r *gormFeedRepository) Nuke(_ context.Context) error {
+	res := r.db.Unscoped().Where("1 = 1").Delete(&models.Item{})
+	if res.Error != nil {
+		return res.Error
+	}
+	res = r.db.Unscoped().Where("1 = 1").Delete(&models.Feed{})
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
 }

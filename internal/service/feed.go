@@ -19,6 +19,7 @@ type FeedService interface {
 	AddFeed(ctx context.Context, url string) (string, error)
 	DeleteFeed(ctx context.Context, id string) error
 	UpdateFeed(ctx context.Context, feed *models.Feed) error
+	Nuke(ctx context.Context) error
 }
 
 type feedService struct {
@@ -68,6 +69,8 @@ func (s *feedService) FetchFeed(ctx context.Context, url string) (*models.Feed, 
 		LastFetch:   time.Now(),
 		Items:       rss.Channel.Items,
 	}
+	// TODO: Remove this
+	fmt.Printf("items: %+v\n", rss.Channel.Items)
 
 	return feed, nil
 }
@@ -110,4 +113,8 @@ func (s *feedService) DeleteFeed(ctx context.Context, id string) error {
 
 func (s *feedService) UpdateFeed(ctx context.Context, feed *models.Feed) error {
 	return s.repo.UpdateFeed(ctx, feed)
+}
+
+func (s *feedService) Nuke(ctx context.Context) error {
+	return s.repo.Nuke(ctx)
 }
