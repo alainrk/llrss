@@ -10,6 +10,7 @@
 __debug_bin*
 feeds.json
 feeds.db
+tmp/
 
 # Test binary, built with `go test -c`
 *.test

@@ -3,8 +3,10 @@ package main
 
 import (
 	"context"
+	"llrss/internal/config"
 	"llrss/internal/handler"
-	"llrss/internal/repository/json"
+	"llrss/internal/models"
+	"llrss/internal/repository/sqlite"
 	"llrss/internal/service"
 	"log"
 	"net/http"
@@ -18,24 +20,19 @@ import (
 )
 
 func main() {
-	// dbConfig := config.NewDatabaseConfig()
-	// db, err := config.InitDatabase(dbConfig)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	//
-	// // Auto migrate the schema
-	// if err := db.AutoMigrate(&models.Feed{}, &models.Item{}); err != nil {
-	// 	log.Fatal("failed to migrate database:", err)
-	// }
+	dbConfig := config.NewDatabaseConfig()
+	db, err := config.InitDatabase(dbConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Auto migrate the schema
+	if err := db.AutoMigrate(&models.Feed{}, &models.Item{}); err != nil {
+		log.Fatal("failed to migrate database:", err)
+	}
 
 	// Initialize repository
-	// feedRepo := repository.NewGormFeedRepository(db)
-
-	feedRepo, err := json.NewJSONFileFeedRepository("feeds.json")
-	if err != nil {
-		log.Fatalf("Failed to create feed repository: %v", err)
-	}
+	feedRepo := sqlite.NewGormFeedRepository(db)
 
 	feedService := service.NewFeedService(feedRepo)
 	feedHandler := handler.NewFeedHandler(feedService)
