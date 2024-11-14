@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"llrss/internal/models"
+	"llrss/internal/text"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -67,7 +69,9 @@ func (r *gormFeedRepository) SaveFeed(ctx context.Context, feed *models.Feed) (s
 		feed.ID = uuid.New().String()
 	}
 
-	// Avoid saving feed items
+	feed.Title = strings.TrimSpace(feed.Title)
+	feed.Description = text.CleanDescription(feed.Description)
+
 	items := feed.Items
 	feed.Items = nil
 
@@ -87,6 +91,9 @@ func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, ite
 	for _, item := range items {
 		item.ID = item.Link
 		item.FeedID = feedID
+
+		item.Title = strings.TrimSpace(item.Title)
+		item.Description = text.CleanDescription(item.Description)
 
 		res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&item)
 		if res.Error != nil {
