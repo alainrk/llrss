@@ -2,7 +2,6 @@ package text
 
 import (
 	"bytes"
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -18,8 +17,6 @@ func CleanDescription(input string) string {
 	if strings.Contains(strings.ToLower(input), "<") && strings.Contains(strings.ToLower(input), ">") {
 		input = stripHTML(input)
 	}
-
-	fmt.Println(input)
 
 	// Normalize newlines
 	input = strings.ReplaceAll(input, "\r\n", "\n")
@@ -63,7 +60,7 @@ func stripHTML(input string) string {
 		case html.StartTagToken, html.EndTagToken:
 			tag, _ := tokenizer.TagName()
 			tagName := strings.ToLower(string(tag))
-			fmt.Println(string(tag), tagName)
+
 			if tagName == "br" || tagName == "p" || tagName == "div" {
 				if !lastWasNewline {
 					buffer.WriteString("\n")
