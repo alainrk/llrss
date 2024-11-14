@@ -65,11 +65,21 @@ func (r *gormFeedRepository) SaveFeed(_ context.Context, feed *models.Feed) (str
 		feed.ID = uuid.New().String()
 	}
 
+	// Avoid saving feed items
+	feed.Items = nil
+
 	res := r.db.Create(feed)
 	if res.Error != nil {
 		return "", res.Error
 	}
 	return feed.ID, nil
+}
+
+func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, items []models.Item) error {
+	for _, item := range items {
+		item.FeedID = feedID
+	}
+	return r.db.Create(&items).Error
 }
 
 func (r *gormFeedRepository) DeleteFeed(_ context.Context, id string) error {
@@ -96,6 +106,10 @@ func (r *gormFeedRepository) Nuke(_ context.Context) error {
 		return res.Error
 	}
 	res = r.db.Unscoped().Where("1 = 1").Delete(&models.Feed{})
+	if res.Error != nil {
+		return res.Error
+	}
+	res = r.db.Unscoped().Where("1 = 1").Delete(&models.ItemStatus{})
 	if res.Error != nil {
 		return res.Error
 	}

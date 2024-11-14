@@ -59,7 +59,7 @@ type Content struct {
 }
 
 type Item struct {
-	// TODO: ID UUID
+	ID          string        `gorm:"primaryKey;type:string"`
 	XMLName     xml.Name      `xml:"item" gorm:"-"`
 	Title       string        `xml:"title" gorm:"not null"`
 	Link        string        `xml:"link" gorm:"not null"`
@@ -73,6 +73,13 @@ type Item struct {
 	PubDate     string        `xml:"pubDate,omitempty"`
 	Source      string        `xml:"source,omitempty"`
 	FeedID      string        `gorm:"index"`
+	Statuses    ItemStatus    `gorm:"foreignKey:FeedItemID"`
+}
+
+type ItemStatus struct {
+	ID         string `gorm:"primaryKey;type:string"`
+	FeedItemID string `gorm:"index"`
+	IsRead     bool
 }
 
 type Feed struct {
