@@ -3,10 +3,12 @@ package sqlite
 import (
 	"context"
 	"errors"
+	"fmt"
 	"llrss/internal/models"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ErrFeedNotFound = errors.New("feed not found")
@@ -60,26 +62,46 @@ func (r *gormFeedRepository) ListFeeds(_ context.Context) ([]models.Feed, error)
 	return feeds, nil
 }
 
-func (r *gormFeedRepository) SaveFeed(_ context.Context, feed *models.Feed) (string, error) {
+func (r *gormFeedRepository) SaveFeed(ctx context.Context, feed *models.Feed) (string, error) {
 	if feed.ID == "" {
 		feed.ID = uuid.New().String()
 	}
 
 	// Avoid saving feed items
+	items := feed.Items
 	feed.Items = nil
 
 	res := r.db.Create(feed)
 	if res.Error != nil {
 		return "", res.Error
 	}
+
+	err := r.SaveFeedItems(ctx, feed.ID, items)
+	if err != nil {
+		fmt.Printf("failed to save feed items: %v\n", err)
+	}
 	return feed.ID, nil
 }
 
 func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, items []models.Item) error {
 	for _, item := range items {
+		item.ID = item.Link
 		item.FeedID = feedID
+
+		res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&item)
+		if res.Error != nil {
+			fmt.Printf("failed to save item: %v\n", res.Error)
+			continue
+		}
+		res = r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&models.ItemStatus{
+			FeedItemID: item.ID,
+		})
+		if res.Error != nil {
+			fmt.Printf("failed to save item status: %v\n", res.Error)
+			continue
+		}
 	}
-	return r.db.Create(&items).Error
+	return nil
 }
 
 func (r *gormFeedRepository) DeleteFeed(_ context.Context, id string) error {
