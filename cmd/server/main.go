@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// Auto migrate the schema
-	if err := db.AutoMigrate(&models.Feed{}, &models.Item{}, &models.ItemStatus{}); err != nil {
+	if err := db.AutoMigrate(&models.Feed{}, &models.Item{}); err != nil {
 		log.Fatal("failed to migrate database:", err)
 	}
 

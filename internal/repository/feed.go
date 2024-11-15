@@ -12,5 +12,8 @@ type FeedRepository interface {
 	SaveFeed(ctx context.Context, feed *models.Feed) (string, error)
 	DeleteFeed(ctx context.Context, id string) error
 	UpdateFeed(ctx context.Context, feed *models.Feed) error
+
+	GetFeedItem(ctx context.Context, id string) (*models.Item, error)
+	UpdateFeedItem(ctx context.Context, s *models.Item) error
 	Nuke(ctx context.Context) error
 }

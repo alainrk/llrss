@@ -25,6 +25,8 @@ func (h *FeedHandler) RegisterRoutes(r chi.Router) {
 	r.Get("/feeds/{id}", h.GetFeed)
 	r.Delete("/feeds/{id}", h.DeleteFeed)
 	r.Put("/feeds/{id}", h.UpdateFeed)
+	r.Put("/feeds/read/{id}", h.MarkAsRead)
+	r.Put("/feeds/unread/{id}", h.MarkAsUnread)
 	r.Delete("/nuke", h.Nuke)
 }
 
@@ -106,6 +108,28 @@ func (h *FeedHandler) UpdateFeed(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *FeedHandler) markReadStatusHandler(status bool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		err := h.feedService.MarkFeedItemRead(r.Context(), id, status)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func (h *FeedHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
+	h.markReadStatusHandler(true)(w, r)
+}
+
+func (h *FeedHandler) MarkAsUnread(w http.ResponseWriter, r *http.Request) {
+	h.markReadStatusHandler(false)(w, r)
 }
 
 func (h *FeedHandler) Nuke(w http.ResponseWriter, r *http.Request) {

@@ -73,12 +73,7 @@ type Item struct {
 	PubDate     string        `xml:"pubDate,omitempty"`
 	Source      string        `xml:"source,omitempty"`
 	FeedID      string        `gorm:"index"`
-	Status      ItemStatus    `gorm:"foreignKey:FeedItemID"`
-}
-
-type ItemStatus struct {
-	FeedItemID string `gorm:"index;primaryKey"`
-	IsRead     bool   `gorm:"default:false"`
+	IsRead      bool          `gorm:"default:false"`
 }
 
 type Feed struct {

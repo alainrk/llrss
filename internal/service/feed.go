@@ -19,6 +19,7 @@ type FeedService interface {
 	AddFeed(ctx context.Context, url string) (string, error)
 	DeleteFeed(ctx context.Context, id string) error
 	UpdateFeed(ctx context.Context, feed *models.Feed) error
+	MarkFeedItemRead(ctx context.Context, feedItemID string, read bool) error
 	Nuke(ctx context.Context) error
 }
 
@@ -111,6 +112,15 @@ func (s *feedService) DeleteFeed(ctx context.Context, id string) error {
 
 func (s *feedService) UpdateFeed(ctx context.Context, feed *models.Feed) error {
 	return s.repo.UpdateFeed(ctx, feed)
+}
+
+func (s *feedService) MarkFeedItemRead(ctx context.Context, feedItemID string, read bool) error {
+	i, err := s.repo.GetFeedItem(ctx, feedItemID)
+	if err != nil {
+		return err
+	}
+	i.IsRead = read
+	return s.repo.UpdateFeedItem(ctx, i)
 }
 
 func (s *feedService) Nuke(ctx context.Context) error {

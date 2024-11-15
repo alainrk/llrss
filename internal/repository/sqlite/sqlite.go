@@ -2,9 +2,11 @@ package sqlite
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"llrss/internal/models"
+	"llrss/internal/repository"
 	"llrss/internal/text"
 	"strings"
 
@@ -15,21 +17,11 @@ import (
 
 var ErrFeedNotFound = errors.New("feed not found")
 
-type FeedRepository interface {
-	GetFeed(ctx context.Context, id string) (*models.Feed, error)
-	GetFeedByURL(ctx context.Context, url string) (*models.Feed, error)
-	ListFeeds(ctx context.Context) ([]models.Feed, error)
-	SaveFeed(ctx context.Context, feed *models.Feed) (string, error)
-	DeleteFeed(ctx context.Context, id string) error
-	UpdateFeed(ctx context.Context, feed *models.Feed) error
-	Nuke(ctx context.Context) error
-}
-
 type gormFeedRepository struct {
 	db *gorm.DB
 }
 
-func NewGormFeedRepository(db *gorm.DB) FeedRepository {
+func NewGormFeedRepository(db *gorm.DB) repository.FeedRepository {
 	return &gormFeedRepository{db: db}
 }
 
@@ -89,22 +81,15 @@ func (r *gormFeedRepository) SaveFeed(ctx context.Context, feed *models.Feed) (s
 
 func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, items []models.Item) error {
 	for _, item := range items {
-		item.ID = item.Link
+		item.ID = base64.StdEncoding.EncodeToString([]byte(item.Link))
 		item.FeedID = feedID
-
 		item.Title = strings.TrimSpace(item.Title)
 		item.Description = text.CleanDescription(item.Description)
 
+		// NOTE: If multiple feeds try to create the same item (URL as ID), we don't add it but neither fail
 		res := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&item)
 		if res.Error != nil {
 			fmt.Printf("failed to save item: %v\n", res.Error)
-			continue
-		}
-		res = r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&models.ItemStatus{
-			FeedItemID: item.ID,
-		})
-		if res.Error != nil {
-			fmt.Printf("failed to save item status: %v\n", res.Error)
 			continue
 		}
 	}
@@ -129,16 +114,26 @@ func (r *gormFeedRepository) UpdateFeed(_ context.Context, feed *models.Feed) er
 	})
 }
 
+func (r *gormFeedRepository) GetFeedItem(ctx context.Context, id string) (*models.Item, error) {
+	i := &models.Item{}
+	res := r.db.First(i, id)
+	if res.Error != nil {
+		fmt.Printf("failed to get feed item: %v\n", res.Error)
+		return nil, res.Error
+	}
+	return i, nil
+}
+
+func (r *gormFeedRepository) UpdateFeedItem(_ context.Context, s *models.Item) error {
+	return r.db.Save(s).Error
+}
+
 func (r *gormFeedRepository) Nuke(_ context.Context) error {
 	res := r.db.Unscoped().Where("1 = 1").Delete(&models.Item{})
 	if res.Error != nil {
 		return res.Error
 	}
 	res = r.db.Unscoped().Where("1 = 1").Delete(&models.Feed{})
-	if res.Error != nil {
-		return res.Error
-	}
-	res = r.db.Unscoped().Where("1 = 1").Delete(&models.ItemStatus{})
 	if res.Error != nil {
 		return res.Error
 	}

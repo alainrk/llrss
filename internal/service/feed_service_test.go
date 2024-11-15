@@ -51,6 +51,16 @@ func (m *MockFeedRepository) Nuke(ctx context.Context) error {
 	return m.nukeFunc(ctx)
 }
 
+func (m *MockFeedRepository) GetFeedItem(ctx context.Context, id string) (*models.Item, error) {
+	// TODO: Implement this
+	return nil, nil
+}
+
+func (m *MockFeedRepository) UpdateFeedItem(ctx context.Context, s *models.Item) error {
+	// TODO: Implement this
+	return nil
+}
+
 // MockRoundTripper implements http.RoundTripper for testing.
 type MockRoundTripper struct {
 	roundTripFunc func(req *http.Request) (*http.Response, error)
