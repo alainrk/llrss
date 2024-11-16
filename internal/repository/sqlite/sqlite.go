@@ -9,7 +9,6 @@ import (
 	"llrss/internal/text"
 	"strings"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -38,7 +37,9 @@ func (r *gormFeedRepository) GetFeed(_ context.Context, id string) (*models.Feed
 
 func (r *gormFeedRepository) GetFeedByURL(_ context.Context, url string) (*models.Feed, error) {
 	var feed models.Feed
-	res := r.db.First(&feed, "url = ?", url)
+	id := text.URLToID(url)
+
+	res := r.db.First(&feed, "id = ?", id)
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -59,7 +60,7 @@ func (r *gormFeedRepository) ListFeeds(_ context.Context) ([]models.Feed, error)
 
 func (r *gormFeedRepository) SaveFeed(ctx context.Context, feed *models.Feed) (string, error) {
 	if feed.ID == "" {
-		feed.ID = uuid.New().String()
+		feed.ID = text.URLToID(feed.URL)
 	}
 
 	feed.Title = strings.TrimSpace(feed.Title)
