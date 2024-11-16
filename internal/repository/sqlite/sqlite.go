@@ -51,8 +51,9 @@ func (r *gormFeedRepository) GetFeedByURL(_ context.Context, url string) (*model
 
 func (r *gormFeedRepository) ListFeeds(_ context.Context) ([]models.Feed, error) {
 	var feeds []models.Feed
-	if err := r.db.Preload("Items").Find(&feeds).Error; err != nil {
-		return nil, err
+	res := r.db.Find(&feeds)
+	if res.Error != nil {
+		return nil, res.Error
 	}
 	return feeds, nil
 }
