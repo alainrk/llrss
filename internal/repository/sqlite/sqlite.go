@@ -27,11 +27,12 @@ func NewGormFeedRepository(db *gorm.DB) repository.FeedRepository {
 
 func (r *gormFeedRepository) GetFeed(_ context.Context, id string) (*models.Feed, error) {
 	var feed models.Feed
-	if err := r.db.Preload("Items").First(&feed, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	res := r.db.First(&feed, "id = ?", id)
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 			return nil, ErrFeedNotFound
 		}
-		return nil, err
+		return nil, res.Error
 	}
 	return &feed, nil
 }
@@ -116,7 +117,8 @@ func (r *gormFeedRepository) UpdateFeed(_ context.Context, feed *models.Feed) er
 
 func (r *gormFeedRepository) GetFeedItem(ctx context.Context, id string) (*models.Item, error) {
 	i := &models.Item{}
-	res := r.db.First(i, id)
+	res := r.db.First(i, "id = ?", id)
+	fmt.Println(id, i)
 	if res.Error != nil {
 		fmt.Printf("failed to get feed item: %v\n", res.Error)
 		return nil, res.Error
