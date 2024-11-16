@@ -3,6 +3,8 @@ package text
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCleanDescription(t *testing.T) {
@@ -103,6 +105,107 @@ func TestCleanDescription(t *testing.T) {
 					strings.ReplaceAll(got, " ", "·"),
 					strings.ReplaceAll(tt.expected, " ", "·"))
 			}
+		})
+	}
+}
+
+func TestURLToID(t *testing.T) {
+	tests := []struct {
+		checkFn  func(*testing.T, string)
+		wantDiff map[string]struct{}
+		name     string
+		url      string
+		wantSame bool
+	}{
+		{
+			name: "simple url",
+			url:  "https://example.com",
+			checkFn: func(t *testing.T, got string) {
+				// Should only contain URL-safe characters
+				assert.NotContains(t, got, "+")
+				assert.NotContains(t, got, "/")
+				assert.NotContains(t, got, "=")
+			},
+			wantSame: true,
+		},
+		{
+			name: "url with special chars",
+			url:  "https://example.com/path?q=1&b=2#fragment",
+			checkFn: func(t *testing.T, got string) {
+				assert.NotContains(t, got, "+")
+				assert.NotContains(t, got, "/")
+				assert.NotContains(t, got, "=")
+			},
+			wantSame: true,
+		},
+		{
+			name: "unicode url",
+			url:  "https://例子.com/路徑",
+			checkFn: func(t *testing.T, got string) {
+				assert.NotContains(t, got, "+")
+				assert.NotContains(t, got, "/")
+				assert.NotContains(t, got, "=")
+			},
+			wantSame: true,
+		},
+		{
+			name: "empty string",
+			url:  "",
+			checkFn: func(t *testing.T, got string) {
+				assert.NotContains(t, got, "+")
+				assert.NotContains(t, got, "/")
+				assert.NotContains(t, got, "=")
+			},
+			wantSame: true,
+		},
+		{
+			name: "uniqueness check",
+			url:  "https://example.com",
+			checkFn: func(t *testing.T, got string) {
+				// This will be used with multiple different URLs
+				// to ensure they generate different IDs
+			},
+			wantDiff: map[string]struct{}{
+				"https://example.com":      {},
+				"https://example.com/":     {},
+				"https://example.com/path": {},
+				"https://example2.com":     {},
+				"http://example.com":       {},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := URLToID(tt.url)
+
+			// Run custom checks
+			if tt.checkFn != nil {
+				tt.checkFn(t, got)
+			}
+
+			// Check idempotency
+			if tt.wantSame {
+				assert.Equal(t, strings.TrimSpace(got), got, "same URL should generate same ID")
+			}
+
+			// Check uniqueness
+			if tt.wantDiff != nil {
+				ids := make(map[string]string)
+				for url := range tt.wantDiff {
+					id := URLToID(url)
+					for existingURL, existingID := range ids {
+						assert.NotEqual(t, id, existingID,
+							"URLs should generate unique IDs - collision between %q and %q",
+							url, existingURL)
+					}
+					ids[url] = id
+				}
+			}
+
+			// Additional sanity checks
+			assert.Equal(t, strings.TrimSpace(got), got, "ID should not have leading/trailing spaces")
+			assert.Len(t, strings.Split(got, " "), 1, "ID should not contain spaces")
 		})
 	}
 }

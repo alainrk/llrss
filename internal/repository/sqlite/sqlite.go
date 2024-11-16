@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"llrss/internal/models"
@@ -83,7 +82,7 @@ func (r *gormFeedRepository) SaveFeed(ctx context.Context, feed *models.Feed) (s
 
 func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, items []models.Item) error {
 	for _, item := range items {
-		item.ID = base64.StdEncoding.EncodeToString([]byte(item.Link))
+		item.ID = text.URLToID(item.Link)
 		item.FeedID = feedID
 		item.Title = strings.TrimSpace(item.Title)
 		item.Description = text.CleanDescription(item.Description)

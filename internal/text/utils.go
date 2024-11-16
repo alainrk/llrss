@@ -2,11 +2,23 @@ package text
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"regexp"
 	"strings"
 
 	"golang.org/x/net/html"
 )
+
+func URLToID(url string) string {
+	hasher := sha256.New()
+	hasher.Write([]byte(url))
+	hash := hasher.Sum(nil)
+
+	// encoded := base64.URLEncoding.EncodeToString(hash)
+	// return strings.TrimRight(encoded, "=")
+	return strings.ToLower(hex.EncodeToString(hash))
+}
 
 func CleanDescription(input string) string {
 	if input == "" {
