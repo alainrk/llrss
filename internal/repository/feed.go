@@ -2,18 +2,18 @@ package repository
 
 import (
 	"context"
-	"llrss/internal/models"
+	"llrss/internal/models/db"
 )
 
 type FeedRepository interface {
-	GetFeed(ctx context.Context, id string) (*models.Feed, error)
-	GetFeedByURL(ctx context.Context, url string) (*models.Feed, error)
-	ListFeeds(ctx context.Context) ([]models.Feed, error)
-	SaveFeed(ctx context.Context, feed *models.Feed) (string, error)
+	GetFeed(ctx context.Context, id string) (*db.Feed, error)
+	GetFeedByURL(ctx context.Context, url string) (*db.Feed, error)
+	ListFeeds(ctx context.Context) ([]db.Feed, error)
+	SaveFeed(ctx context.Context, feed *db.Feed) (string, error)
 	DeleteFeed(ctx context.Context, id string) error
-	UpdateFeed(ctx context.Context, feed *models.Feed) error
+	UpdateFeed(ctx context.Context, feed *db.Feed) error
 
-	GetFeedItem(ctx context.Context, id string) (*models.Item, error)
-	UpdateFeedItem(ctx context.Context, s *models.Item) error
+	GetFeedItem(ctx context.Context, id string) (*db.Item, error)
+	UpdateFeedItem(ctx context.Context, s *db.Item) error
 	Nuke(ctx context.Context) error
 }

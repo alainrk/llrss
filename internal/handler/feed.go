@@ -3,7 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"llrss/internal/models"
+	"llrss/internal/models/db"
 	"llrss/internal/service"
 	"net/http"
 
@@ -93,7 +93,7 @@ func (h *FeedHandler) DeleteFeed(w http.ResponseWriter, r *http.Request) {
 
 func (h *FeedHandler) UpdateFeed(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var feed models.Feed
+	var feed db.Feed
 	if err := json.NewDecoder(r.Body).Decode(&feed); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

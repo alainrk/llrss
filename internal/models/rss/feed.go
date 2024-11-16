@@ -1,4 +1,4 @@
-package models
+package rss
 
 import (
 	"encoding/xml"
@@ -59,40 +59,39 @@ type Content struct {
 }
 
 type Item struct {
-	ID          string        `gorm:"primaryKey;type:string"`
-	XMLName     xml.Name      `xml:"item" gorm:"-"`
-	Title       string        `xml:"title" gorm:"not null"`
-	Link        string        `xml:"link" gorm:"not null"`
-	Description string        `xml:"description"`
-	Content     *Content      `gorm:"-"`
-	Author      string        `xml:"author,omitempty"`
-	Category    string        `xml:"category,omitempty"`
-	Comments    string        `xml:"comments,omitempty"`
-	Enclosure   *RssEnclosure `gorm:"-"`
-	GUID        *RssGUID      `gorm:"-"`
-	PubDate     string        `xml:"pubDate,omitempty"`
-	Source      string        `xml:"source,omitempty"`
-	FeedID      string        `gorm:"index"`
-	IsRead      bool          `gorm:"default:false"`
+	XMLName     xml.Name `xml:"item"`
+	Title       string   `xml:"title"`
+	Link        string   `xml:"link"`
+	Description string   `xml:"description"`
+	Content     *Content
+	Author      string `xml:"author,omitempty"`
+	Category    string `xml:"category,omitempty"`
+	Comments    string `xml:"comments,omitempty"`
+	Enclosure   *Enclosure
+	GUID        *GUID
+	PubDate     string `xml:"pubDate,omitempty"`
+	Source      string `xml:"source,omitempty"`
+	FeedID      string
+	IsRead      bool
 }
 
 type Feed struct {
-	ID          string `gorm:"primaryKey"`
-	URL         string `gorm:"uniqueIndex;not null"`
-	Title       string `gorm:"not null"`
-	Description string `gorm:"type:text" xml:"description"`
+	ID          string
+	URL         string
+	Title       string
+	Description string `xml:"description"`
 	LastFetch   time.Time
-	Items       []Item `gorm:"foreignKey:FeedID"`
+	Items       []Item
 }
 
-type RssEnclosure struct {
+type Enclosure struct {
 	XMLName xml.Name `xml:"enclosure"`
 	URL     string   `xml:"url,attr"`
 	Length  string   `xml:"length,attr"`
 	Type    string   `xml:"type,attr"`
 }
 
-type RssGUID struct {
+type GUID struct {
 	XMLName     xml.Name `xml:"guid"`
 	ID          string   `xml:",chardata"`
 	IsPermaLink string   `xml:"isPermaLink,attr,omitempty"`

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"llrss/internal/models"
+	"llrss/internal/models/db"
 	"llrss/internal/repository"
 	"net/http"
 	"net/http/httptest"
@@ -15,25 +15,25 @@ import (
 )
 
 type mockService struct {
-	feeds map[string]*models.Feed
+	feeds map[string]*db.Feed
 }
 
 func newMockService() *mockService {
 	return &mockService{
-		feeds: make(map[string]*models.Feed),
+		feeds: make(map[string]*db.Feed),
 	}
 }
 
-func (m *mockService) FetchFeed(ctx context.Context, url string) (*models.Feed, error) {
-	feed := &models.Feed{
+func (m *mockService) FetchFeed(ctx context.Context, url string) (*db.Feed, error) {
+	feed := &db.Feed{
 		URL:   url,
 		Title: "Test Feed",
-		Items: []models.Item{{Title: "Test Item"}},
+		Items: []db.Item{{Title: "Test Item"}},
 	}
 	return feed, nil
 }
 
-func (m *mockService) GetFeed(ctx context.Context, id string) (*models.Feed, error) {
+func (m *mockService) GetFeed(ctx context.Context, id string) (*db.Feed, error) {
 	feed, ok := m.feeds[id]
 	if !ok {
 		return nil, repository.ErrFeedNotFound
@@ -41,7 +41,7 @@ func (m *mockService) GetFeed(ctx context.Context, id string) (*models.Feed, err
 	return feed, nil
 }
 
-func (m *mockService) GetFeedByURL(ctx context.Context, url string) (*models.Feed, error) {
+func (m *mockService) GetFeedByURL(ctx context.Context, url string) (*db.Feed, error) {
 	feed, ok := m.feeds[url]
 	if !ok {
 		return nil, repository.ErrFeedNotFound
@@ -49,8 +49,8 @@ func (m *mockService) GetFeedByURL(ctx context.Context, url string) (*models.Fee
 	return feed, nil
 }
 
-func (m *mockService) ListFeeds(ctx context.Context) ([]models.Feed, error) {
-	feeds := make([]models.Feed, 0, len(m.feeds))
+func (m *mockService) ListFeeds(ctx context.Context) ([]db.Feed, error) {
+	feeds := make([]db.Feed, 0, len(m.feeds))
 	for _, feed := range m.feeds {
 		feeds = append(feeds, *feed)
 	}
@@ -58,7 +58,7 @@ func (m *mockService) ListFeeds(ctx context.Context) ([]models.Feed, error) {
 }
 
 func (m *mockService) AddFeed(ctx context.Context, url string) (string, error) {
-	feed := &models.Feed{
+	feed := &db.Feed{
 		ID:    "test-id",
 		URL:   url,
 		Title: "Test Feed",
@@ -72,7 +72,7 @@ func (m *mockService) DeleteFeed(ctx context.Context, id string) error {
 	return nil
 }
 
-func (m *mockService) UpdateFeed(ctx context.Context, feed *models.Feed) error {
+func (m *mockService) UpdateFeed(ctx context.Context, feed *db.Feed) error {
 	m.feeds[feed.ID] = feed
 	return nil
 }
@@ -83,7 +83,7 @@ func (m *mockService) MarkFeedItemRead(ctx context.Context, feedItemID string, r
 }
 
 func (m *mockService) Nuke(ctx context.Context) error {
-	m.feeds = make(map[string]*models.Feed)
+	m.feeds = make(map[string]*db.Feed)
 	return nil
 }
 
@@ -107,7 +107,7 @@ func TestListFeeds(t *testing.T) {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var feeds []models.Feed
+	var feeds []db.Feed
 	if err := json.NewDecoder(w.Body).Decode(&feeds); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestGetFeed(t *testing.T) {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var responseFeed models.Feed
+	var responseFeed db.Feed
 	if err := json.NewDecoder(w.Body).Decode(&responseFeed); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/xml"
+	"llrss/internal/models/rss"
 	"testing"
 )
 
@@ -26,31 +27,31 @@ const mockRSSFeed = `<?xml version="1.0" encoding="UTF-8"?>
 </rss>`
 
 func TestRSSParsing(t *testing.T) {
-	var rss RSS
-	err := xml.Unmarshal([]byte(mockRSSFeed), &rss)
+	var r rss.RSS
+	err := xml.Unmarshal([]byte(mockRSSFeed), &r)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal RSS: %v", err)
 	}
 
 	// Test channel metadata
-	if rss.Channel.Title != "Test Feed" {
-		t.Errorf("Expected title 'Test Feed', got '%s'", rss.Channel.Title)
+	if r.Channel.Title != "Test Feed" {
+		t.Errorf("Expected title 'Test Feed', got '%s'", r.Channel.Title)
 	}
 
-	if rss.Channel.Link != "http://example.com" {
-		t.Errorf("Expected link 'http://example.com', got '%s'", rss.Channel.Link)
+	if r.Channel.Link != "http://example.com" {
+		t.Errorf("Expected link 'http://example.com', got '%s'", r.Channel.Link)
 	}
 
-	if rss.Channel.Language != "en-us" {
-		t.Errorf("Expected language 'en-us', got '%s'", rss.Channel.Language)
+	if r.Channel.Language != "en-us" {
+		t.Errorf("Expected language 'en-us', got '%s'", r.Channel.Language)
 	}
 
 	// Test items
-	if len(rss.Channel.Items) != 1 {
-		t.Fatalf("Expected 1 item, got %d", len(rss.Channel.Items))
+	if len(r.Channel.Items) != 1 {
+		t.Fatalf("Expected 1 item, got %d", len(r.Channel.Items))
 	}
 
-	item := rss.Channel.Items[0]
+	item := r.Channel.Items[0]
 	if item.Title != "Test Item 1" {
 		t.Errorf("Expected item title 'Test Item 1', got '%s'", item.Title)
 	}

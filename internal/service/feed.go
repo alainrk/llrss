@@ -5,20 +5,22 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"llrss/internal/models"
+	"llrss/internal/models/db"
+	"llrss/internal/models/rss"
 	"llrss/internal/repository"
+	"llrss/internal/text"
 	"net/http"
 	"time"
 )
 
 type FeedService interface {
-	FetchFeed(ctx context.Context, url string) (*models.Feed, error)
-	GetFeed(ctx context.Context, id string) (*models.Feed, error)
-	GetFeedByURL(ctx context.Context, url string) (*models.Feed, error)
-	ListFeeds(ctx context.Context) ([]models.Feed, error)
+	FetchFeed(ctx context.Context, url string) (*db.Feed, error)
+	GetFeed(ctx context.Context, id string) (*db.Feed, error)
+	GetFeedByURL(ctx context.Context, url string) (*db.Feed, error)
+	ListFeeds(ctx context.Context) ([]db.Feed, error)
 	AddFeed(ctx context.Context, url string) (string, error)
 	DeleteFeed(ctx context.Context, id string) error
-	UpdateFeed(ctx context.Context, feed *models.Feed) error
+	UpdateFeed(ctx context.Context, feed *db.Feed) error
 	MarkFeedItemRead(ctx context.Context, feedItemID string, read bool) error
 	Nuke(ctx context.Context) error
 }
@@ -37,7 +39,7 @@ func NewFeedService(repo repository.FeedRepository) FeedService {
 	}
 }
 
-func (s *feedService) FetchFeed(ctx context.Context, url string) (*models.Feed, error) {
+func (s *feedService) FetchFeed(ctx context.Context, url string) (*db.Feed, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
@@ -58,31 +60,51 @@ func (s *feedService) FetchFeed(ctx context.Context, url string) (*models.Feed, 
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
-	var rss models.RSS
-	if err := xml.Unmarshal(body, &rss); err != nil {
+	var r rss.RSS
+	if err := xml.Unmarshal(body, &r); err != nil {
 		return nil, fmt.Errorf("parse RSS: %w", err)
 	}
 
-	feed := &models.Feed{
+	var items []db.Item
+	for _, item := range r.Channel.Items {
+		d, err := text.ParseRSSDate(item.PubDate)
+		if err != nil {
+			fmt.Printf("parse date: %v", err)
+			continue
+		}
+
+		items = append(items, db.Item{
+			Title:       item.Title,
+			Description: item.Description,
+			Link:        item.Link,
+			Author:      item.Author,
+			Category:    item.Category,
+			Comments:    item.Comments,
+			Source:      item.Source,
+			PubDate:     d,
+		})
+	}
+
+	feed := &db.Feed{
 		URL:         url,
-		Title:       rss.Channel.Title,
-		Description: rss.Channel.Description,
+		Title:       r.Channel.Title,
+		Description: r.Channel.Description,
 		LastFetch:   time.Now(),
-		Items:       rss.Channel.Items,
+		Items:       items,
 	}
 
 	return feed, nil
 }
 
-func (s *feedService) GetFeed(ctx context.Context, id string) (*models.Feed, error) {
+func (s *feedService) GetFeed(ctx context.Context, id string) (*db.Feed, error) {
 	return s.repo.GetFeed(ctx, id)
 }
 
-func (s *feedService) GetFeedByURL(ctx context.Context, url string) (*models.Feed, error) {
+func (s *feedService) GetFeedByURL(ctx context.Context, url string) (*db.Feed, error) {
 	return s.repo.GetFeedByURL(ctx, url)
 }
 
-func (s *feedService) ListFeeds(ctx context.Context) ([]models.Feed, error) {
+func (s *feedService) ListFeeds(ctx context.Context) ([]db.Feed, error) {
 	return s.repo.ListFeeds(ctx)
 }
 
@@ -110,7 +132,7 @@ func (s *feedService) DeleteFeed(ctx context.Context, id string) error {
 	return s.repo.DeleteFeed(ctx, id)
 }
 
-func (s *feedService) UpdateFeed(ctx context.Context, feed *models.Feed) error {
+func (s *feedService) UpdateFeed(ctx context.Context, feed *db.Feed) error {
 	return s.repo.UpdateFeed(ctx, feed)
 }
 

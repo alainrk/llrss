@@ -5,8 +5,8 @@ import (
 	"context"
 	"llrss/internal/config"
 	"llrss/internal/handler"
-	"llrss/internal/models"
-	"llrss/internal/repository/sqlite"
+	sqlite "llrss/internal/models/db"
+	repodb "llrss/internal/repository/db"
 	"llrss/internal/service"
 	"log"
 	"net/http"
@@ -27,12 +27,12 @@ func main() {
 	}
 
 	// Auto migrate the schema
-	if err := db.AutoMigrate(&models.Feed{}, &models.Item{}); err != nil {
+	if err := db.AutoMigrate(&sqlite.Feed{}, &sqlite.Item{}); err != nil {
 		log.Fatal("failed to migrate database:", err)
 	}
 
 	// Initialize repository
-	feedRepo := sqlite.NewGormFeedRepository(db)
+	feedRepo := repodb.NewGormFeedRepository(db)
 
 	feedService := service.NewFeedService(feedRepo)
 	feedHandler := handler.NewFeedHandler(feedService)

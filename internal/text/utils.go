@@ -6,9 +6,18 @@ import (
 	"encoding/hex"
 	"regexp"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
+
+const (
+	RSSDateFormat = "Mon, 02 Jan 2006 15:04:05 -0700"
+)
+
+func ParseRSSDate(dateStr string) (time.Time, error) {
+	return time.Parse(RSSDateFormat, dateStr)
+}
 
 func URLToID(url string) string {
 	hasher := sha256.New()

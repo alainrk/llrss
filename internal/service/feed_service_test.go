@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"llrss/internal/models"
+	"llrss/internal/models/db"
 	"net/http"
 	"reflect"
 	"strings"
@@ -14,28 +14,28 @@ import (
 
 // MockFeedRepository implements FeedRepository interface for testing.
 type MockFeedRepository struct {
-	getFeedFunc      func(ctx context.Context, id string) (*models.Feed, error)
-	getFeedByURLFunc func(ctx context.Context, url string) (*models.Feed, error)
-	listFeedsFunc    func(ctx context.Context) ([]models.Feed, error)
-	saveFeedFunc     func(ctx context.Context, feed *models.Feed) (string, error)
+	getFeedFunc      func(ctx context.Context, id string) (*db.Feed, error)
+	getFeedByURLFunc func(ctx context.Context, url string) (*db.Feed, error)
+	listFeedsFunc    func(ctx context.Context) ([]db.Feed, error)
+	saveFeedFunc     func(ctx context.Context, feed *db.Feed) (string, error)
 	deleteFeedFunc   func(ctx context.Context, id string) error
-	updateFeedFunc   func(ctx context.Context, feed *models.Feed) error
+	updateFeedFunc   func(ctx context.Context, feed *db.Feed) error
 	nukeFunc         func(ctx context.Context) error
 }
 
-func (m *MockFeedRepository) GetFeed(ctx context.Context, id string) (*models.Feed, error) {
+func (m *MockFeedRepository) GetFeed(ctx context.Context, id string) (*db.Feed, error) {
 	return m.getFeedFunc(ctx, id)
 }
 
-func (m *MockFeedRepository) GetFeedByURL(ctx context.Context, url string) (*models.Feed, error) {
+func (m *MockFeedRepository) GetFeedByURL(ctx context.Context, url string) (*db.Feed, error) {
 	return m.getFeedByURLFunc(ctx, url)
 }
 
-func (m *MockFeedRepository) ListFeeds(ctx context.Context) ([]models.Feed, error) {
+func (m *MockFeedRepository) ListFeeds(ctx context.Context) ([]db.Feed, error) {
 	return m.listFeedsFunc(ctx)
 }
 
-func (m *MockFeedRepository) SaveFeed(ctx context.Context, feed *models.Feed) (string, error) {
+func (m *MockFeedRepository) SaveFeed(ctx context.Context, feed *db.Feed) (string, error) {
 	return m.saveFeedFunc(ctx, feed)
 }
 
@@ -43,7 +43,7 @@ func (m *MockFeedRepository) DeleteFeed(ctx context.Context, id string) error {
 	return m.deleteFeedFunc(ctx, id)
 }
 
-func (m *MockFeedRepository) UpdateFeed(ctx context.Context, feed *models.Feed) error {
+func (m *MockFeedRepository) UpdateFeed(ctx context.Context, feed *db.Feed) error {
 	return m.updateFeedFunc(ctx, feed)
 }
 
@@ -51,12 +51,12 @@ func (m *MockFeedRepository) Nuke(ctx context.Context) error {
 	return m.nukeFunc(ctx)
 }
 
-func (m *MockFeedRepository) GetFeedItem(ctx context.Context, id string) (*models.Item, error) {
+func (m *MockFeedRepository) GetFeedItem(ctx context.Context, id string) (*db.Item, error) {
 	// TODO: Implement this
 	return nil, nil
 }
 
-func (m *MockFeedRepository) UpdateFeedItem(ctx context.Context, s *models.Item) error {
+func (m *MockFeedRepository) UpdateFeedItem(ctx context.Context, s *db.Item) error {
 	// TODO: Implement this
 	return nil
 }
@@ -86,7 +86,7 @@ func TestFetchFeed(t *testing.T) {
 	tests := []struct {
 		mockError     error
 		mockResponse  *http.Response
-		expectedFeed  *models.Feed
+		expectedFeed  *db.Feed
 		name          string
 		url           string
 		expectedError bool
@@ -100,7 +100,7 @@ func TestFetchFeed(t *testing.T) {
 			},
 			mockError:     nil,
 			expectedError: false,
-			expectedFeed: &models.Feed{
+			expectedFeed: &db.Feed{
 				URL:         "http://example.com/feed",
 				Title:       "Test Feed",
 				Description: "Test Description",
@@ -178,14 +178,14 @@ func TestFetchFeed(t *testing.T) {
 
 func TestGetFeed(t *testing.T) {
 	ctx := context.Background()
-	expectedFeed := &models.Feed{
+	expectedFeed := &db.Feed{
 		ID:    "1",
 		Title: "Test Feed",
 	}
 
 	tests := []struct {
 		mockError     error
-		mockFeed      *models.Feed
+		mockFeed      *db.Feed
 		name          string
 		id            string
 		expectedError bool
@@ -209,7 +209,7 @@ func TestGetFeed(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockFeedRepository{
-				getFeedFunc: func(ctx context.Context, id string) (*models.Feed, error) {
+				getFeedFunc: func(ctx context.Context, id string) (*db.Feed, error) {
 					if id != tt.id {
 						t.Errorf("expected id %q, got %q", tt.id, id)
 					}
@@ -243,7 +243,7 @@ func TestGetFeed(t *testing.T) {
 
 func TestListFeeds(t *testing.T) {
 	ctx := context.Background()
-	expectedFeeds := []models.Feed{
+	expectedFeeds := []db.Feed{
 		{ID: "1", Title: "Feed 1"},
 		{ID: "2", Title: "Feed 2"},
 	}
@@ -251,7 +251,7 @@ func TestListFeeds(t *testing.T) {
 	tests := []struct {
 		mockError     error
 		name          string
-		mockFeeds     []models.Feed
+		mockFeeds     []db.Feed
 		expectedError bool
 	}{
 		{
@@ -262,7 +262,7 @@ func TestListFeeds(t *testing.T) {
 		},
 		{
 			name:          "empty list",
-			mockFeeds:     []models.Feed{},
+			mockFeeds:     []db.Feed{},
 			mockError:     nil,
 			expectedError: false,
 		},
@@ -277,7 +277,7 @@ func TestListFeeds(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockFeedRepository{
-				listFeedsFunc: func(ctx context.Context) ([]models.Feed, error) {
+				listFeedsFunc: func(ctx context.Context) ([]db.Feed, error) {
 					return tt.mockFeeds, tt.mockError
 				},
 			}
@@ -316,7 +316,7 @@ func TestAddFeed(t *testing.T) {
 	tests := []struct {
 		mockError     error
 		mockResponse  *http.Response
-		existingFeed  *models.Feed
+		existingFeed  *db.Feed
 		name          string
 		url           string
 		expectedID    string
@@ -341,7 +341,7 @@ func TestAddFeed(t *testing.T) {
 				StatusCode: http.StatusOK,
 				Body:       io.NopCloser(strings.NewReader(validXML)),
 			},
-			existingFeed: &models.Feed{
+			existingFeed: &db.Feed{
 				ID:  "existing-id",
 				URL: "http://example.com/feed",
 			},
@@ -381,13 +381,13 @@ func TestAddFeed(t *testing.T) {
 			}
 
 			mockRepo := &MockFeedRepository{
-				getFeedByURLFunc: func(ctx context.Context, url string) (*models.Feed, error) {
+				getFeedByURLFunc: func(ctx context.Context, url string) (*db.Feed, error) {
 					if tt.existingFeed != nil && tt.existingFeed.URL == url {
 						return tt.existingFeed, nil
 					}
 					return nil, fmt.Errorf("not found")
 				},
-				saveFeedFunc: func(ctx context.Context, feed *models.Feed) (string, error) {
+				saveFeedFunc: func(ctx context.Context, feed *db.Feed) (string, error) {
 					if tt.existingFeed != nil {
 						t.Error("save called when feed already exists")
 						return "", fmt.Errorf("feed already exists")
@@ -480,14 +480,14 @@ func TestDeleteFeed(t *testing.T) {
 
 func TestUpdateFeed(t *testing.T) {
 	ctx := context.Background()
-	feed := &models.Feed{
+	feed := &db.Feed{
 		ID:    "1",
 		Title: "Updated Feed",
 	}
 
 	tests := []struct {
 		mockError     error
-		feed          *models.Feed
+		feed          *db.Feed
 		name          string
 		expectedError bool
 	}{
@@ -508,7 +508,7 @@ func TestUpdateFeed(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockFeedRepository{
-				updateFeedFunc: func(ctx context.Context, feed *models.Feed) error {
+				updateFeedFunc: func(ctx context.Context, feed *db.Feed) error {
 					if !reflect.DeepEqual(feed, tt.feed) {
 						t.Errorf("expected feed %+v, got %+v", tt.feed, feed)
 					}
@@ -535,23 +535,23 @@ func TestUpdateFeed(t *testing.T) {
 
 func TestNuke(t *testing.T) {
 	ctx := context.Background()
-	feeds := []models.Feed{
+	feeds := []db.Feed{
 		{ID: "1", Title: "Feed 1"},
 		{ID: "2", Title: "Feed 2"},
 	}
-	// items := []models.Item{
+	// items := []db.Item{
 	// 	{Title: "Item 1", FeedID: "1"},
 	// 	{Title: "Item 2", FeedID: "1"},
 	// 	{Title: "Item 3", FeedID: "2"},
 	// }
 
 	mockRepo := &MockFeedRepository{
-		listFeedsFunc: func(ctx context.Context) ([]models.Feed, error) {
+		listFeedsFunc: func(ctx context.Context) ([]db.Feed, error) {
 			return feeds, nil
 		},
 		nukeFunc: func(ctx context.Context) error {
-			feeds = []models.Feed{}
-			// items = []models.Item{}
+			feeds = []db.Feed{}
+			// items = []db.Item{}
 			return nil
 		},
 	}
