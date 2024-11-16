@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"llrss/internal/models"
 	"llrss/internal/service"
 	"net/http"
@@ -23,6 +24,7 @@ func (h *FeedHandler) RegisterRoutes(r chi.Router) {
 	r.Get("/feeds", h.ListFeeds)
 	r.Post("/feeds", h.AddFeed)
 	r.Get("/feeds/{id}", h.GetFeed)
+	r.Get("/feeds/items/search", h.SearchFeedItems)
 	r.Delete("/feeds/{id}", h.DeleteFeed)
 	r.Put("/feeds/{id}", h.UpdateFeed)
 	r.Put("/feeds/read/{id}", h.MarkAsRead)
@@ -122,6 +124,25 @@ func (h *FeedHandler) markReadStatusHandler(status bool) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
+	unread := true
+
+	query := r.URL.Query().Get("query")
+
+	ur := r.URL.Query().Get("unread")
+	if ur == "0" {
+		unread = false
+	}
+
+	fromDate := r.URL.Query().Get("fromDate")
+
+	toDate := r.URL.Query().Get("toDate")
+	limit := r.URL.Query().Get("limit")
+	cursor := r.URL.Query().Get("cursor")
+
+	fmt.Println(unread, query, fromDate, toDate, limit, cursor)
 }
 
 func (h *FeedHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
