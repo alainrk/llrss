@@ -96,9 +96,14 @@ func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, ite
 
 func (r *gormFeedRepository) DeleteFeed(_ context.Context, id string) error {
 	return r.d.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Delete(&db.Feed{}, id).Error; err != nil {
+		if err := tx.Where("feed_id = ?", id).Delete(&db.Item{}).Error; err != nil {
 			return err
 		}
+
+		if err := tx.Delete(&db.Feed{}, "id = ?", id).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
