@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"llrss/internal/models/db"
 	"llrss/internal/service"
+	"llrss/internal/text"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -127,19 +130,48 @@ func (h *FeedHandler) markReadStatusHandler(status bool) http.HandlerFunc {
 }
 
 func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var fromDate, toDate time.Time
+
 	unread := true
+	limit := 10
 
 	query := r.URL.Query().Get("query")
 
-	ur := r.URL.Query().Get("unread")
-	if ur == "0" {
+	u := r.URL.Query().Get("unread")
+	if u == "0" {
 		unread = false
 	}
 
-	fromDate := r.URL.Query().Get("fromDate")
+	fd := r.URL.Query().Get("from")
+	if fd == "" {
+		fd = "1900-01-01"
+	}
+	fromDate, err = text.ParseAPISearchDate(fd)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("invalid fromDate: %s", fd), http.StatusBadRequest)
+		return
+	}
 
-	toDate := r.URL.Query().Get("toDate")
-	limit := r.URL.Query().Get("limit")
+	td := r.URL.Query().Get("to")
+	if td == "" {
+		td = "2100-12-01"
+	}
+	toDate, err = text.ParseAPISearchDate(td)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("invalid toDate: %s", td), http.StatusBadRequest)
+		return
+	}
+
+	l := r.URL.Query().Get("limit")
+	if l != "" {
+		limit, err = strconv.Atoi(l)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("invalid limit: %s", l), http.StatusBadRequest)
+			return
+		}
+	}
+
 	cursor := r.URL.Query().Get("cursor")
 
 	fmt.Println(unread, query, fromDate, toDate, limit, cursor)
