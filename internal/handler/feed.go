@@ -134,7 +134,9 @@ func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
 	var fromDate, toDate time.Time
 
 	unread := true
+	offset := 0
 	limit := 10
+	sort := "desc" // Uses PubDate
 
 	query := r.URL.Query().Get("query")
 
@@ -163,6 +165,11 @@ func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s := r.URL.Query().Get("sort")
+	if s == "asc" {
+		sort = s
+	}
+
 	l := r.URL.Query().Get("limit")
 	if l != "" {
 		limit, err = strconv.Atoi(l)
@@ -171,10 +178,29 @@ func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if limit > 100 {
+		limit = 100
+	}
+	if limit < 1 {
+		limit = 1
+	}
 
-	cursor := r.URL.Query().Get("cursor")
+	// TODO: Implement cursor instead of offset
+	// cursor := r.URL.Query().Get("cursor")
 
-	fmt.Println(unread, query, fromDate, toDate, limit, cursor)
+	o := r.URL.Query().Get("offset")
+	if o != "" {
+		offset, err = strconv.Atoi(o)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("invalid offset: %s", o), http.StatusBadRequest)
+			return
+		}
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	fmt.Println(unread, query, fromDate, toDate, limit, offset, sort)
 }
 
 func (h *FeedHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
