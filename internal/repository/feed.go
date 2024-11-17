@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"llrss/internal/models"
 	"llrss/internal/models/db"
 )
 
@@ -15,5 +16,8 @@ type FeedRepository interface {
 
 	GetFeedItem(ctx context.Context, id string) (*db.Item, error)
 	UpdateFeedItem(ctx context.Context, s *db.Item) error
+
+	SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error)
+
 	Nuke(ctx context.Context) error
 }

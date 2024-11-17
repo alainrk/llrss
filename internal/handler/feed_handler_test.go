@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"llrss/internal/models"
 	"llrss/internal/models/db"
 	"llrss/internal/repository"
 	"net/http"
@@ -80,6 +81,11 @@ func (m *mockService) UpdateFeed(ctx context.Context, feed *db.Feed) error {
 func (m *mockService) MarkFeedItemRead(ctx context.Context, feedItemID string, read bool) error {
 	// TODO Implement this
 	return nil
+}
+
+func (m *mockService) SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error) {
+	// TODO Implement this
+	return nil, 0, nil
 }
 
 func (m *mockService) Nuke(ctx context.Context) error {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"llrss/internal/models"
 	"llrss/internal/models/db"
 	"net/http"
 	"reflect"
@@ -59,6 +60,11 @@ func (m *MockFeedRepository) GetFeedItem(ctx context.Context, id string) (*db.It
 func (m *MockFeedRepository) UpdateFeedItem(ctx context.Context, s *db.Item) error {
 	// TODO: Implement this
 	return nil
+}
+
+func (m *MockFeedRepository) SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error) {
+	// TODO: Implement this
+	return nil, 0, nil
 }
 
 // MockRoundTripper implements http.RoundTripper for testing.

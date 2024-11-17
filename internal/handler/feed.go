@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"llrss/internal/models"
 	"llrss/internal/models/db"
 	"llrss/internal/service"
 	"llrss/internal/text"
@@ -200,7 +201,33 @@ func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 
+	// TODO: Remove
 	fmt.Println(unread, query, fromDate, toDate, limit, offset, sort)
+
+	items, total, err := h.feedService.SearchFeedItems(r.Context(), models.SearchParams{
+		FromDate: fromDate,
+		ToDate:   toDate,
+		Query:    query,
+		Unread:   unread,
+		Sort:     sort,
+		Limit:    limit,
+		Offset:   offset,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res := &models.SearchResult{
+		Items: items,
+		Total: total,
+	}
+
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *FeedHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {

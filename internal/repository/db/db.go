@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"llrss/internal/models"
 	"llrss/internal/models/db"
 	"llrss/internal/repository"
 	"llrss/internal/text"
@@ -130,6 +131,55 @@ func (r *gormFeedRepository) GetFeedItem(ctx context.Context, id string) (*db.It
 
 func (r *gormFeedRepository) UpdateFeedItem(_ context.Context, s *db.Item) error {
 	return r.d.Save(s).Error
+}
+
+func (r *gormFeedRepository) SearchFeedItems(_ context.Context, params models.SearchParams) ([]db.Item, int64, error) {
+	var items []db.Item
+	var total int64
+
+	// Start building the query
+	query := r.d.Model(&db.Item{})
+
+	// Apply text search if query is provided
+	if params.Query != "" {
+		searchPattern := "%" + params.Query + "%"
+		query = query.Where(
+			"title LIKE ? OR description LIKE ? OR author LIKE ? OR category LIKE ?",
+			searchPattern, searchPattern, searchPattern, searchPattern,
+		)
+	}
+
+	// Apply unread filter
+	if params.Unread {
+		query = query.Where("is_read = ?", false)
+	}
+
+	// Apply date range
+	query = query.Where("pub_date BETWEEN ? AND ?", params.FromDate, params.ToDate)
+
+	// Count total before applying pagination
+	err := query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Apply sorting
+	if params.Sort == "asc" {
+		query = query.Order("pub_date asc")
+	} else {
+		query = query.Order("pub_date desc")
+	}
+
+	// Apply pagination
+	query = query.Offset(params.Offset).Limit(params.Limit)
+
+	// Execute the final query
+	err = query.Find(&items).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return items, total, nil
 }
 
 func (r *gormFeedRepository) Nuke(_ context.Context) error {

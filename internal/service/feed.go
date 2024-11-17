@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"llrss/internal/models"
 	"llrss/internal/models/db"
 	"llrss/internal/models/rss"
 	"llrss/internal/repository"
@@ -22,6 +23,7 @@ type FeedService interface {
 	DeleteFeed(ctx context.Context, id string) error
 	UpdateFeed(ctx context.Context, feed *db.Feed) error
 	MarkFeedItemRead(ctx context.Context, feedItemID string, read bool) error
+	SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error)
 	Nuke(ctx context.Context) error
 }
 
@@ -143,6 +145,10 @@ func (s *feedService) MarkFeedItemRead(ctx context.Context, feedItemID string, r
 	}
 	i.IsRead = read
 	return s.repo.UpdateFeedItem(ctx, i)
+}
+
+func (s *feedService) SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error) {
+	return s.repo.SearchFeedItems(ctx, items)
 }
 
 func (s *feedService) Nuke(ctx context.Context) error {
