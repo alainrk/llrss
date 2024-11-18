@@ -13,7 +13,7 @@ import (
 
 const (
 	RSSDateFormat       = "Mon, 02 Jan 2006 15:04:05 -0700"
-	APISearchDateFormat = "2006-02-01"
+	APISearchDateFormat = "2006-01-02"
 )
 
 func ParseAPISearchDate(dateStr string) (time.Time, error) {
