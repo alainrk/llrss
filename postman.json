@@ -1,217 +1,399 @@
 {
-  "info": {
-    "name": "LLRSS API",
-    "description": "API collection for Long Live RSS Feed Reader",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "Feeds",
-      "description": "Operations for managing RSS feeds",
-      "item": [
-        {
-          "name": "List All Feeds",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/feeds",
-              "host": ["{{baseUrl}}"],
-              "path": ["feeds"]
-            },
-            "description": "Retrieves a list of all RSS feeds"
-          },
-          "response": [
-            {
-              "name": "Success",
-              "originalRequest": {
-                "method": "GET",
-                "url": {
-                  "raw": "{{baseUrl}}/feeds"
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "body": "[\n    {\n        \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n        \"url\": \"https://example.com/feed.xml\",\n        \"title\": \"Example Feed\",\n        \"description\": \"An example RSS feed\",\n        \"last_fetch\": \"2024-11-06T12:00:00Z\",\n        \"items\": []\n    }\n]"
-            }
-          ]
-        },
-        {
-          "name": "Add New Feed",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/feeds",
-              "host": ["{{baseUrl}}"],
-              "path": ["feeds"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"url\": \"https://example.com/feed.xml\"\n}"
-            },
-            "description": "Adds a new RSS feed to the system"
-          },
-          "response": [
-            {
-              "name": "Success",
-              "originalRequest": {
-                "method": "POST",
-                "url": {
-                  "raw": "{{baseUrl}}/feeds"
-                }
-              },
-              "status": "Created",
-              "code": 201,
-              "body": "{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"url\": \"https://example.com/feed.xml\",\n    \"title\": \"Example Feed\",\n    \"description\": \"An example RSS feed\",\n    \"last_fetch\": \"2024-11-06T12:00:00Z\",\n    \"items\": []\n}"
-            }
-          ]
-        },
-        {
-          "name": "Get Feed by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/feeds/{{feedId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["feeds", "{{feedId}}"]
-            },
-            "description": "Retrieves a specific RSS feed by ID"
-          },
-          "response": [
-            {
-              "name": "Success",
-              "originalRequest": {
-                "method": "GET",
-                "url": {
-                  "raw": "{{baseUrl}}/feeds/{{feedId}}"
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "body": "{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"url\": \"https://example.com/feed.xml\",\n    \"title\": \"Example Feed\",\n    \"description\": \"An example RSS feed\",\n    \"last_fetch\": \"2024-11-06T12:00:00Z\",\n    \"items\": []\n}"
-            }
-          ]
-        },
-        {
-          "name": "Update Feed",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/feeds/{{feedId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["feeds", "{{feedId}}"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"url\": \"https://example.com/updated-feed.xml\",\n    \"title\": \"Updated Feed Title\",\n    \"description\": \"Updated feed description\"\n}"
-            },
-            "description": "Updates an existing RSS feed"
-          },
-          "response": [
-            {
-              "name": "Success",
-              "originalRequest": {
-                "method": "PUT",
-                "url": {
-                  "raw": "{{baseUrl}}/feeds/{{feedId}}"
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "body": "{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"url\": \"https://example.com/updated-feed.xml\",\n    \"title\": \"Updated Feed Title\",\n    \"description\": \"Updated feed description\",\n    \"last_fetch\": \"2024-11-06T12:00:00Z\",\n    \"items\": []\n}"
-            }
-          ]
-        },
-        {
-          "name": "Delete Feed",
-          "request": {
-            "method": "DELETE",
-            "url": {
-              "raw": "{{baseUrl}}/feeds/{{feedId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["feeds", "{{feedId}}"]
-            },
-            "description": "Deletes an RSS feed"
-          },
-          "response": [
-            {
-              "name": "Success",
-              "originalRequest": {
-                "method": "DELETE",
-                "url": {
-                  "raw": "{{baseUrl}}/feeds/{{feedId}}"
-                }
-              },
-              "status": "No Content",
-              "code": 204
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080/api/v1"
-    },
-    {
-      "key": "feedId",
-      "value": "123e4567-e89b-12d3-a456-426614174000"
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [""]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Global response tests",
-          "pm.test(\"Response is JSON\", function() {",
-          "    if (pm.response.size()) {",
-          "        pm.response.to.be.json;",
-          "    }",
-          "});",
-          "",
-          "pm.test(\"Status code is successful\", function() {",
-          "    pm.response.to.be.success;",
-          "});"
-        ]
-      }
-    }
-  ]
+	"info": {
+		"_postman_id": "facafe6a-c45a-4447-96a8-28e4a0871b2c",
+		"name": "LLRSS API",
+		"description": "API collection for Long Live RSS Feed Reader",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "781425"
+	},
+	"item": [
+		{
+			"name": "Feeds",
+			"item": [
+				{
+					"name": "List All Feeds",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/feeds",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feeds"
+							]
+						},
+						"description": "Retrieves a list of all RSS feeds"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n        \"url\": \"https://example.com/feed.xml\",\n        \"title\": \"Example Feed\",\n        \"description\": \"An example RSS feed\",\n        \"last_fetch\": \"2024-11-06T12:00:00Z\",\n        \"items\": []\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Add New Feed",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://technicalwriting.dev/rss.xml\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/feeds",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feeds"
+							]
+						},
+						"description": "Adds a new RSS feed to the system"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "Text",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"url\": \"https://example.com/feed.xml\",\n    \"title\": \"Example Feed\",\n    \"description\": \"An example RSS feed\",\n    \"last_fetch\": \"2024-11-06T12:00:00Z\",\n    \"items\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Feed by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/feeds/75697dc30e29f704c5cfe0c5aa947f150d8b823a12dca7576fff46182126b628",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feeds",
+								"75697dc30e29f704c5cfe0c5aa947f150d8b823a12dca7576fff46182126b628"
+							]
+						},
+						"description": "Retrieves a specific RSS feed by ID"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"url\": \"https://example.com/feed.xml\",\n    \"title\": \"Example Feed\",\n    \"description\": \"An example RSS feed\",\n    \"last_fetch\": \"2024-11-06T12:00:00Z\",\n    \"items\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Search Feed Items",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/feeds/items/search?limit=2&query=pa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feeds",
+								"items",
+								"search"
+							],
+							"query": [
+								{
+									"key": "from",
+									"value": "2024-11-10",
+									"disabled": true
+								},
+								{
+									"key": "to",
+									"value": null,
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "10",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "2"
+								},
+								{
+									"key": "unread",
+									"value": null,
+									"disabled": true
+								},
+								{
+									"key": "query",
+									"value": "pa"
+								}
+							]
+						},
+						"description": "Retrieves a specific RSS feed by ID"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"url\": \"https://example.com/feed.xml\",\n    \"title\": \"Example Feed\",\n    \"description\": \"An example RSS feed\",\n    \"last_fetch\": \"2024-11-06T12:00:00Z\",\n    \"items\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Feed",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://example.com/updated-feed.xml\",\n    \"title\": \"Updated Feed Title\",\n    \"description\": \"Updated feed description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/feeds/{{feedId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feeds",
+								"{{feedId}}"
+							]
+						},
+						"description": "Updates an existing RSS feed"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"url\": \"https://example.com/updated-feed.xml\",\n    \"title\": \"Updated Feed Title\",\n    \"description\": \"Updated feed description\",\n    \"last_fetch\": \"2024-11-06T12:00:00Z\",\n    \"items\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete Feed",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/feeds/13c6de24ef4057e673da400c7b964943652b143a8431e9ee182c26764eab6c5b",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feeds",
+								"13c6de24ef4057e673da400c7b964943652b143a8431e9ee182c26764eab6c5b"
+							]
+						},
+						"description": "Deletes an RSS feed"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "Text",
+							"header": [],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Mark Read",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/feeds/read/7680fab9994cb3e324ff72dfd4334c530a373ebf3455c4f4925341d7f82d16f4",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feeds",
+								"read",
+								"7680fab9994cb3e324ff72dfd4334c530a373ebf3455c4f4925341d7f82d16f4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Unread",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/feeds/unread/7680fab9994cb3e324ff72dfd4334c530a373ebf3455c4f4925341d7f82d16f4",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"feeds",
+								"unread",
+								"7680fab9994cb3e324ff72dfd4334c530a373ebf3455c4f4925341d7f82d16f4"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Operations for managing RSS feeds"
+		},
+		{
+			"name": "General",
+			"item": [
+				{
+					"name": "Nuke",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/nuke",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"nuke"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global response tests",
+					"pm.test(\"Response is JSON\", function() {",
+					"    if (pm.response.size()) {",
+					"        pm.response.to.be.json;",
+					"    }",
+					"});",
+					"",
+					"pm.test(\"Status code is successful\", function() {",
+					"    pm.response.to.be.success;",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/api/v1"
+		},
+		{
+			"key": "feedId",
+			"value": "123e4567-e89b-12d3-a456-426614174000"
+		}
+	]
 }

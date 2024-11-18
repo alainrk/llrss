@@ -7,6 +7,7 @@
 *.dll
 *.so
 *.dylib
+.vscode
 __debug_bin*
 feeds.json
 feeds.db
