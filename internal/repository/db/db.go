@@ -136,6 +136,7 @@ func (r *gormFeedRepository) UpdateFeedItem(_ context.Context, s *db.Item) error
 func (r *gormFeedRepository) SearchFeedItems(_ context.Context, params models.SearchParams) ([]db.Item, int64, error) {
 	var items []db.Item
 	var total int64
+	var err error
 
 	// Start building the query
 	query := r.d.Model(&db.Item{})
@@ -158,7 +159,7 @@ func (r *gormFeedRepository) SearchFeedItems(_ context.Context, params models.Se
 	query = query.Where("pub_date BETWEEN ? AND ?", params.FromDate, params.ToDate)
 
 	// Count total before applying pagination
-	err := query.Count(&total).Error
+	err = query.Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -174,7 +175,7 @@ func (r *gormFeedRepository) SearchFeedItems(_ context.Context, params models.Se
 	query = query.Offset(params.Offset).Limit(params.Limit)
 
 	// Execute the final query
-	err = query.Find(&items).Error
+	err = query.Find(&items).Debug().Error
 	if err != nil {
 		return nil, 0, err
 	}

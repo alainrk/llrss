@@ -17,7 +17,7 @@ const (
 )
 
 func ParseAPISearchDate(dateStr string) (time.Time, error) {
-	return time.Parse(RSSDateFormat, dateStr)
+	return time.Parse(APISearchDateFormat, dateStr)
 }
 
 func ParseRSSDate(dateStr string) (time.Time, error) {
