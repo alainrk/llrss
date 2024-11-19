@@ -110,12 +110,11 @@ func (r *gormFeedRepository) DeleteFeed(_ context.Context, id string) error {
 }
 
 func (r *gormFeedRepository) UpdateFeed(_ context.Context, feed *db.Feed) error {
-	return r.d.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(feed).Error; err != nil {
-			return err
-		}
-		return nil
-	})
+	res := r.d.Save(feed)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
 }
 
 func (r *gormFeedRepository) GetFeedItem(ctx context.Context, id string) (*db.Item, error) {

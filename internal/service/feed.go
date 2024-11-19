@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
+// TODO: Implement this through a column in Feed table based on provider TTL requested.
 const (
-	// TODO: Implement this through a column in Feed table based on provider TTL requested
 	MinRefreshRateMinutes = 0
 )
 
@@ -72,6 +72,8 @@ func (s *feedService) FetchFeed(ctx context.Context, url string) (*db.Feed, erro
 	if err := xml.Unmarshal(body, &r); err != nil {
 		return nil, fmt.Errorf("parse RSS: %w", err)
 	}
+
+	fmt.Println(r)
 
 	var items []db.Item
 	for _, item := range r.Channel.Items {
@@ -158,6 +160,7 @@ func (s *feedService) SearchFeedItems(ctx context.Context, items models.SearchPa
 	return s.repo.SearchFeedItems(ctx, items)
 }
 
+// TODO: When refreshing feed I should also update the metadata of the Feed itself, in case they're changed (title, description, etc.)
 func (s *feedService) RefreshFeeds(ctx context.Context) error {
 	feeds, err := s.repo.ListFeeds(ctx)
 	if err != nil {
@@ -171,17 +174,22 @@ func (s *feedService) RefreshFeeds(ctx context.Context) error {
 			continue
 		}
 
-		f.LastFetch = time.Now()
-		err := s.repo.UpdateFeed(ctx, &f)
+		feed, err := s.FetchFeed(ctx, f.URL)
 		if err != nil {
-			e := fmt.Errorf("error on updating last_fetch feed %s: %w", f.URL, err)
+			e := fmt.Errorf("error on fetching feed %s: %w", f.URL, err)
 			fmt.Printf("%v\n", e)
 			continue
 		}
 
-		feed, err := s.FetchFeed(ctx, f.URL)
+		f.LastFetch = time.Now()
+		f.Title = feed.Title
+		f.Description = feed.Description
+		// Don't update items directly
+		f.Items = nil
+
+		err = s.repo.UpdateFeed(ctx, &f)
 		if err != nil {
-			e := fmt.Errorf("error on fetching feed %s: %w", f.URL, err)
+			e := fmt.Errorf("error on updating last_fetch feed %s: %w", f.URL, err)
 			fmt.Printf("%v\n", e)
 			continue
 		}
