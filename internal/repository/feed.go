@@ -16,6 +16,7 @@ type FeedRepository interface {
 
 	GetFeedItem(ctx context.Context, id string) (*db.Item, error)
 	UpdateFeedItem(ctx context.Context, s *db.Item) error
+	SaveFeedItems(ctx context.Context, feedID string, items []db.Item) error
 
 	SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error)
 

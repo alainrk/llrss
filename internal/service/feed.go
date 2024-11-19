@@ -14,6 +14,10 @@ import (
 	"time"
 )
 
+const (
+	MinRefreshRateMinutes = 0
+)
+
 type FeedService interface {
 	FetchFeed(ctx context.Context, url string) (*db.Feed, error)
 	GetFeed(ctx context.Context, id string) (*db.Feed, error)
@@ -24,6 +28,7 @@ type FeedService interface {
 	UpdateFeed(ctx context.Context, feed *db.Feed) error
 	MarkFeedItemRead(ctx context.Context, feedItemID string, read bool) error
 	SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error)
+	RefreshFeeds(ctx context.Context) error
 	Nuke(ctx context.Context) error
 }
 
@@ -87,6 +92,7 @@ func (s *feedService) FetchFeed(ctx context.Context, url string) (*db.Feed, erro
 		})
 	}
 
+	// TODO: This should be an RSS.Feed, not db.Feed to keep things well separated, shouldn't be a problem
 	feed := &db.Feed{
 		URL:         url,
 		Title:       r.Channel.Title,
@@ -149,6 +155,45 @@ func (s *feedService) MarkFeedItemRead(ctx context.Context, feedItemID string, r
 
 func (s *feedService) SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error) {
 	return s.repo.SearchFeedItems(ctx, items)
+}
+
+func (s *feedService) RefreshFeeds(ctx context.Context) error {
+	feeds, err := s.repo.ListFeeds(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range feeds {
+		if (f.LastFetch.Add(MinRefreshRateMinutes * time.Minute)).After(time.Now()) {
+			// TODO: These must be debug logs
+			fmt.Printf("feed %s is not due for refresh\n", f.URL)
+			continue
+		}
+
+		f.LastFetch = time.Now()
+		err := s.repo.UpdateFeed(ctx, &f)
+		if err != nil {
+			e := fmt.Errorf("error on updating last_fetch feed %s: %w", f.URL, err)
+			fmt.Printf("%v\n", e)
+			continue
+		}
+
+		feed, err := s.FetchFeed(ctx, f.URL)
+		if err != nil {
+			e := fmt.Errorf("error on fetching feed %s: %w", f.URL, err)
+			fmt.Printf("%v\n", e)
+			continue
+		}
+
+		err = s.repo.SaveFeedItems(ctx, f.ID, feed.Items)
+		if err != nil {
+			e := fmt.Errorf("error on saving feed items for feed %s: %w", f.URL, err)
+			fmt.Printf("%v\n", e)
+			continue
+		}
+	}
+
+	return nil
 }
 
 func (s *feedService) Nuke(ctx context.Context) error {

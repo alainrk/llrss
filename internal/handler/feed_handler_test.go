@@ -88,6 +88,11 @@ func (m *mockService) SearchFeedItems(ctx context.Context, items models.SearchPa
 	return nil, 0, nil
 }
 
+func (m *mockService) RefreshFeeds(ctx context.Context) error {
+	// TODO Implement this
+	return nil
+}
+
 func (m *mockService) Nuke(ctx context.Context) error {
 	m.feeds = make(map[string]*db.Feed)
 	return nil

@@ -17,5 +17,6 @@ type SearchParams struct {
 
 type SearchResult struct {
 	Items []db.Item
+	Len   int64
 	Total int64
 }

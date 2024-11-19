@@ -67,6 +67,11 @@ func (m *MockFeedRepository) SearchFeedItems(ctx context.Context, items models.S
 	return nil, 0, nil
 }
 
+func (m *MockFeedRepository) SaveFeedItems(ctx context.Context, feedID string, items []db.Item) error {
+	// TODO: Implement this
+	return nil
+}
+
 // MockRoundTripper implements http.RoundTripper for testing.
 type MockRoundTripper struct {
 	roundTripFunc func(req *http.Request) (*http.Response, error)

@@ -33,6 +33,7 @@ func (h *FeedHandler) RegisterRoutes(r chi.Router) {
 	r.Put("/feeds/{id}", h.UpdateFeed)
 	r.Put("/feeds/read/{id}", h.MarkAsRead)
 	r.Put("/feeds/unread/{id}", h.MarkAsUnread)
+	r.Post("/feeds/refresh", h.RefreshFeeds)
 	r.Delete("/nuke", h.Nuke)
 }
 
@@ -201,9 +202,6 @@ func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 
-	// TODO: Remove
-	fmt.Println(unread, query, fromDate, toDate, limit, offset, sort)
-
 	items, total, err := h.feedService.SearchFeedItems(r.Context(), models.SearchParams{
 		FromDate: fromDate,
 		ToDate:   toDate,
@@ -220,11 +218,19 @@ func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
 
 	res := &models.SearchResult{
 		Items: items,
+		Len:   int64(len(items)),
 		Total: total,
 	}
 
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *FeedHandler) RefreshFeeds(w http.ResponseWriter, r *http.Request) {
+	if err := h.feedService.RefreshFeeds(r.Context()); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
