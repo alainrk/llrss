@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	// TODO: Implement this through a column in Feed table based on provider TTL requested
 	MinRefreshRateMinutes = 0
 )
 
