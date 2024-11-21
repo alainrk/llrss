@@ -156,8 +156,8 @@ func (s *feedService) MarkFeedItemRead(ctx context.Context, feedItemID string, r
 	return s.repo.UpdateFeedItem(ctx, i)
 }
 
-func (s *feedService) SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error) {
-	return s.repo.SearchFeedItems(ctx, items)
+func (s *feedService) SearchFeedItems(ctx context.Context, params models.SearchParams) ([]db.Item, int64, error) {
+	return s.repo.SearchFeedItems(ctx, params)
 }
 
 // TODO: When refreshing feed I should also update the metadata of the Feed itself, in case they're changed (title, description, etc.)

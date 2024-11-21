@@ -36,6 +36,7 @@ func main() {
 
 	feedService := service.NewFeedService(feedRepo)
 	feedHandler := handler.NewFeedHandler(feedService)
+	staticHandler := handler.NewStaticHandler(feedService)
 
 	r := chi.NewRouter()
 
@@ -47,6 +48,10 @@ func main() {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		feedHandler.RegisterRoutes(r)
+	})
+
+	r.Route("/", func(r chi.Router) {
+		staticHandler.RegisterRoutes(r)
 	})
 
 	// Create server
