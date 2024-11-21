@@ -44,5 +44,9 @@ func (h *StaticHandler) handleHome(w http.ResponseWriter, r *http.Request) {
 		"Feeds": feeds,
 	}
 
-	h.templates.ExecuteTemplate(w, "home.html", data)
+	err = h.templates.ExecuteTemplate(w, "home.html", data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
