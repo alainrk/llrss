@@ -20,3 +20,8 @@ type SearchResult struct {
 	Len   int64
 	Total int64
 }
+
+type NewUser struct {
+	Name string
+	ID   uint64
+}

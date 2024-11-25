@@ -5,17 +5,16 @@ import (
 )
 
 type Item struct {
-	ID          string `gorm:"primaryKey;type:string"`
-	Title       string `gorm:"not null"`
-	Link        string `gorm:"not null"`
+	PubDate     time.Time `gorm:"index;type:datetime"`
+	ID          string    `gorm:"primaryKey;type:string"`
+	Title       string    `gorm:"not null"`
+	Link        string    `gorm:"not null"`
 	Description string
 	Author      string
 	Category    string
 	Comments    string
-	PubDate     time.Time `gorm:"index;type:datetime"`
 	Source      string
 	FeedID      string `gorm:"index"`
-	IsRead      bool   `gorm:"default:false"`
 }
 
 type Feed struct {

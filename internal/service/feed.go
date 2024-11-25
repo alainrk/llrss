@@ -152,7 +152,10 @@ func (s *feedService) MarkFeedItemRead(ctx context.Context, feedItemID string, r
 	if err != nil {
 		return err
 	}
-	i.IsRead = read
+
+	// TODO: Here for each user we need to create an item and set the read there
+	// i.IsRead = read
+
 	return s.repo.UpdateFeedItem(ctx, i)
 }
 

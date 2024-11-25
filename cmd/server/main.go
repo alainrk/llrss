@@ -27,14 +27,19 @@ func main() {
 	}
 
 	// Auto migrate the schema
-	if err := db.AutoMigrate(&sqlite.Feed{}, &sqlite.Item{}); err != nil {
+	if err := db.AutoMigrate(&sqlite.Feed{}, &sqlite.Item{}, &sqlite.User{}); err != nil {
 		log.Fatal("failed to migrate database:", err)
 	}
 
 	// Initialize repository
 	feedRepo := repodb.NewGormFeedRepository(db)
+	// userRepo := repodb.NewGormUserRepository(db)
 
+	// Initialize services
 	feedService := service.NewFeedService(feedRepo)
+	// userService := service.NewUserService(userRepo)
+
+	// Initialize handlers
 	feedHandler := handler.NewFeedHandler(feedService)
 	staticHandler := handler.NewStaticHandler(feedService)
 
