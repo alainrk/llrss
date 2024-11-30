@@ -40,6 +40,41 @@ func (r *gormUserRepository) SaveUser(_ context.Context, user *models.NewUser) (
 	return user.ID, nil
 }
 
+func (r *gormUserRepository) SaveUserFeed(_ context.Context, userFeed *models.NewUserFeed) (uint64, error) {
+	res := r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&db.UserFeed{
+		UserID: userFeed.UserID,
+		FeedID: userFeed.FeedID,
+	})
+	if res.Error != nil {
+		return 0, res.Error
+	}
+	return userFeed.UserID, nil
+}
+
+func (r *gormUserRepository) SaveUserFeedItem(_ context.Context, userItem *models.NewUserItem) (uint64, error) {
+	res := r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&db.UserItem{
+		UserID: userItem.UserID,
+		ItemID: userItem.ItemID,
+		IsRead: userItem.IsRead,
+	})
+	if res.Error != nil {
+		return 0, res.Error
+	}
+	return userItem.UserID, nil
+}
+
+func (r *gormUserRepository) UpdateUserFeedItem(_ context.Context, userItem *models.NewUserItem) error {
+	res := r.d.Save(&db.UserItem{
+		UserID: userItem.UserID,
+		ItemID: userItem.ItemID,
+		IsRead: userItem.IsRead,
+	})
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
+}
+
 func (r *gormUserRepository) Nuke(_ context.Context) error {
 	res := r.d.Unscoped().Where("1 = 1").Delete(&db.User{})
 	if res.Error != nil {

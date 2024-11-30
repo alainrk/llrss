@@ -74,7 +74,7 @@ func (r *gormFeedRepository) ListFeeds(_ context.Context, userId uint64) ([]db.F
 	return feeds, err
 }
 
-func (r *gormFeedRepository) SaveFeed(ctx context.Context, userId uint64, feed *db.Feed) (string, error) {
+func (r *gormFeedRepository) SaveFeed(ctx context.Context, feed *db.Feed) (string, error) {
 	feed.ID = utils.URLToID(feed.URL)
 
 	// I want to process and save feed items myself after the feed is saved
@@ -86,25 +86,26 @@ func (r *gormFeedRepository) SaveFeed(ctx context.Context, userId uint64, feed *
 		return "", res.Error
 	}
 
+	// TODO: This requires a new function (e.g. subscribeFeed that calls this function before if needed)
 	// Assign it to a user, if any
-	if userId != 0 {
-		res = r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&db.UserFeed{
-			UserID: userId,
-			FeedID: feed.ID,
-		})
-		if res.Error != nil {
-			return "", res.Error
-		}
-	}
+	// if userId != 0 {
+	// 	res = r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&db.UserFeed{
+	// 		UserID: userId,
+	// 		FeedID: feed.ID,
+	// 	})
+	// 	if res.Error != nil {
+	// 		return "", res.Error
+	// 	}
+	// }
 
-	err := r.SaveFeedItems(ctx, feed.ID, userId, items)
+	err := r.SaveFeedItems(ctx, feed.ID, items)
 	if err != nil {
 		fmt.Printf("failed to save feed items: %v\n", err)
 	}
 	return feed.ID, nil
 }
 
-func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, userId uint64, items []db.Item) error {
+func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, items []db.Item) error {
 	for _, item := range items {
 		item.ID = utils.URLToID(item.Link)
 		item.FeedID = feedID
@@ -118,17 +119,36 @@ func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, use
 			continue
 		}
 
-		// Assign it to a user, if any
-		if userId != 0 {
-			res = r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&db.UserItem{
-				UserID: userId,
+		// If the item wasn't actually inserted (already existed), skip creating user items
+		if res.RowsAffected == 0 {
+			continue
+		}
+
+		// Get all users subscribed to this feed
+		var userFeeds []db.UserFeed
+		err := r.d.Where("feed_id = ?", feedID).Find(&userFeeds).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			fmt.Printf("failed to get feed subscribers: %v\n", err)
+			continue
+		}
+
+		// Create UserItem entries for each subscriber
+		for _, userFeed := range userFeeds {
+			userItem := db.UserItem{
 				ItemID: item.ID,
-			})
-			if res.Error != nil {
-				return res.Error
+				UserID: userFeed.UserID,
+				IsRead: false, // Default to unread for new items
+			}
+
+			// TODO: This can be done in bulk or anyway improved performance-wise
+			// Use DoNothing clause in case the user item already exists
+			if err := r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&userItem).Error; err != nil {
+				fmt.Printf("failed to create user item for user %d: %v\n", userFeed.UserID, err)
+				continue
 			}
 		}
 	}
+
 	return nil
 }
 

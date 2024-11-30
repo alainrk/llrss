@@ -25,3 +25,14 @@ type NewUser struct {
 	Name string
 	ID   uint64
 }
+
+type NewUserItem struct {
+	ItemID string
+	UserID uint64
+	IsRead bool
+}
+
+type NewUserFeed struct {
+	FeedID string
+	UserID uint64
+}

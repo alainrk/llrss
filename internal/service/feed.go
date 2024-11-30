@@ -20,27 +20,32 @@ const (
 )
 
 type FeedService interface {
-	// FetchFeed(ctx context.Context, url string) (*db.Feed, error)
-	// GetFeed(ctx context.Context, id string) (*db.Feed, error)
-	// GetFeedByURL(ctx context.Context, url string) (*db.Feed, error)
-	// ListFeeds(ctx context.Context, userId uint64) ([]db.Feed, error)
-	// AddFeed(ctx context.Context, userId uint64, url string) (string, error)
-	// DeleteFeed(ctx context.Context, userId uint64, id string) error
-	// UpdateFeed(ctx context.Context, feed *db.Feed) error
-	// MarkFeedItemRead(ctx context.Context, userId uint64, feedItemID string, read bool) error
-	// SearchFeedItems(ctx context.Context, userId uint64, items models.SearchParams) ([]db.Item, int64, error)
-	// RefreshFeeds(ctx context.Context) error
-	// Nuke(ctx context.Context) error
+	FetchFeed(ctx context.Context, url string) (*db.Feed, error)
+
+	RefreshFeeds(ctx context.Context) error
+
+	GetFeed(ctx context.Context, id string) (*db.Feed, error)
+	GetFeedByURL(ctx context.Context, url string) (*db.Feed, error)
+	ListFeeds(ctx context.Context, userId uint64) ([]db.Feed, error)
+	SearchFeedItems(ctx context.Context, userId uint64, items models.SearchParams) ([]db.Item, int64, error)
+
+	AddFeed(ctx context.Context, userId uint64, url string) (string, error)
+	UpdateFeed(ctx context.Context, feed *db.Feed) error
+	MarkFeedItemRead(ctx context.Context, userId uint64, feedItemID string, read bool) error
+
+	DeleteFeed(ctx context.Context, userId uint64, id string) error
+	Nuke(ctx context.Context) error
 }
 
 type feedService struct {
-	repo   repository.FeedRepository
-	client *http.Client
+	feedRepo repository.FeedRepository
+	userRepo repository.UserRepository
+	client   *http.Client
 }
 
 func NewFeedService(repo repository.FeedRepository) FeedService {
 	return &feedService{
-		repo: repo,
+		feedRepo: repo,
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -108,20 +113,20 @@ func (s *feedService) FetchFeed(ctx context.Context, url string) (*db.Feed, erro
 }
 
 func (s *feedService) GetFeed(ctx context.Context, id string) (*db.Feed, error) {
-	return s.repo.GetFeed(ctx, id)
+	return s.feedRepo.GetFeed(ctx, id)
 }
 
 func (s *feedService) GetFeedByURL(ctx context.Context, url string) (*db.Feed, error) {
-	return s.repo.GetFeedByURL(ctx, url)
+	return s.feedRepo.GetFeedByURL(ctx, url)
 }
 
 func (s *feedService) ListFeeds(ctx context.Context, userId uint64) ([]db.Feed, error) {
-	return s.repo.ListFeeds(ctx, userId)
+	return s.feedRepo.ListFeeds(ctx, userId)
 }
 
 // AddFeed adds a new feed by url and returns its ID.
 func (s *feedService) AddFeed(ctx context.Context, userId uint64, url string) (string, error) {
-	f, _ := s.repo.GetFeedByURL(ctx, url)
+	f, _ := s.feedRepo.GetFeedByURL(ctx, url)
 	if f != nil {
 		return f.ID, nil
 	}
@@ -132,7 +137,7 @@ func (s *feedService) AddFeed(ctx context.Context, userId uint64, url string) (s
 		return "", fmt.Errorf("fetch feed: %w", err)
 	}
 
-	id, err := s.repo.SaveFeed(ctx, userId, feed)
+	id, err := s.feedRepo.SaveFeed(ctx, feed)
 	if err != nil {
 		return "", fmt.Errorf("save feed: %w", err)
 	}
@@ -141,32 +146,28 @@ func (s *feedService) AddFeed(ctx context.Context, userId uint64, url string) (s
 }
 
 func (s *feedService) DeleteFeed(ctx context.Context, userId uint64, id string) error {
-	return s.repo.DeleteFeed(ctx, userId, id)
+	return s.feedRepo.DeleteFeed(ctx, userId, id)
 }
 
 func (s *feedService) UpdateFeed(ctx context.Context, feed *db.Feed) error {
-	return s.repo.UpdateFeed(ctx, feed)
+	return s.feedRepo.UpdateFeed(ctx, feed)
 }
 
 func (s *feedService) MarkFeedItemRead(ctx context.Context, userId uint64, feedItemID string, read bool) error {
-	i, err := s.repo.GetUserItem(ctx, userId, feedItemID)
-	if err != nil {
-		return err
-	}
-
-	// TODO: Here for each user we need to create an item and set the read there
-	// i.IsRead = read
-
-	return s.repo.UpdateUserFeedItem(ctx, userId, i)
+	return s.userRepo.UpdateUserFeedItem(ctx, &models.NewUserItem{
+		ItemID: feedItemID,
+		UserID: userId,
+		IsRead: read,
+	})
 }
 
-func (s *feedService) SearchFeedItems(ctx context.Context, params models.SearchParams) ([]db.Item, int64, error) {
-	return s.repo.SearchFeedItems(ctx, params)
+func (s *feedService) SearchFeedItems(ctx context.Context, userId uint64, params models.SearchParams) ([]db.Item, int64, error) {
+	return s.feedRepo.SearchFeedItems(ctx, userId, params)
 }
 
 // TODO: When refreshing feed I should also update the metadata of the Feed itself, in case they're changed (title, description, etc.)
 func (s *feedService) RefreshFeeds(ctx context.Context) error {
-	feeds, err := s.repo.ListFeeds(ctx)
+	feeds, err := s.feedRepo.ListFeeds(ctx, 0)
 	if err != nil {
 		return err
 	}
@@ -191,14 +192,14 @@ func (s *feedService) RefreshFeeds(ctx context.Context) error {
 		// Don't update items directly
 		f.Items = nil
 
-		err = s.repo.UpdateFeed(ctx, &f)
+		err = s.feedRepo.UpdateFeed(ctx, &f)
 		if err != nil {
 			e := fmt.Errorf("error on updating last_fetch feed %s: %w", f.URL, err)
 			fmt.Printf("%v\n", e)
 			continue
 		}
 
-		err = s.repo.SaveFeedItems(ctx, f.ID, feed.Items)
+		err = s.feedRepo.SaveFeedItems(ctx, f.ID, feed.Items)
 		if err != nil {
 			e := fmt.Errorf("error on saving feed items for feed %s: %w", f.URL, err)
 			fmt.Printf("%v\n", e)
@@ -210,5 +211,5 @@ func (s *feedService) RefreshFeeds(ctx context.Context) error {
 }
 
 func (s *feedService) Nuke(ctx context.Context) error {
-	return s.repo.Nuke(ctx)
+	return s.feedRepo.Nuke(ctx)
 }
