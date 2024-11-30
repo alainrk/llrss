@@ -9,7 +9,7 @@ import (
 	"llrss/internal/models/db"
 	"llrss/internal/models/rss"
 	"llrss/internal/repository"
-	"llrss/internal/text"
+	"llrss/internal/utils"
 	"net/http"
 	"time"
 )
@@ -20,17 +20,17 @@ const (
 )
 
 type FeedService interface {
-	FetchFeed(ctx context.Context, url string) (*db.Feed, error)
-	GetFeed(ctx context.Context, id string) (*db.Feed, error)
-	GetFeedByURL(ctx context.Context, url string) (*db.Feed, error)
-	ListFeeds(ctx context.Context, userId uint64) ([]db.Feed, error)
-	AddFeed(ctx context.Context, userId uint64, url string) (string, error)
-	DeleteFeed(ctx context.Context, userId uint64, id string) error
-	UpdateFeed(ctx context.Context, feed *db.Feed) error
-	MarkFeedItemRead(ctx context.Context, userId uint64, feedItemID string, read bool) error
-	SearchFeedItems(ctx context.Context, userId uint64, items models.SearchParams) ([]db.Item, int64, error)
-	RefreshFeeds(ctx context.Context) error
-	Nuke(ctx context.Context) error
+	// FetchFeed(ctx context.Context, url string) (*db.Feed, error)
+	// GetFeed(ctx context.Context, id string) (*db.Feed, error)
+	// GetFeedByURL(ctx context.Context, url string) (*db.Feed, error)
+	// ListFeeds(ctx context.Context, userId uint64) ([]db.Feed, error)
+	// AddFeed(ctx context.Context, userId uint64, url string) (string, error)
+	// DeleteFeed(ctx context.Context, userId uint64, id string) error
+	// UpdateFeed(ctx context.Context, feed *db.Feed) error
+	// MarkFeedItemRead(ctx context.Context, userId uint64, feedItemID string, read bool) error
+	// SearchFeedItems(ctx context.Context, userId uint64, items models.SearchParams) ([]db.Item, int64, error)
+	// RefreshFeeds(ctx context.Context) error
+	// Nuke(ctx context.Context) error
 }
 
 type feedService struct {
@@ -77,7 +77,7 @@ func (s *feedService) FetchFeed(ctx context.Context, url string) (*db.Feed, erro
 
 	var items []db.Item
 	for _, item := range r.Channel.Items {
-		d, err := text.ParseRSSDate(item.PubDate)
+		d, err := utils.ParseRSSDate(item.PubDate)
 		if err != nil {
 			fmt.Printf("parse date: %v", err)
 			continue

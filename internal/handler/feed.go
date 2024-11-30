@@ -6,7 +6,7 @@ import (
 	"llrss/internal/models"
 	"llrss/internal/models/db"
 	"llrss/internal/service"
-	"llrss/internal/text"
+	"llrss/internal/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -151,7 +151,7 @@ func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
 	if fd == "" {
 		fd = "1900-01-01"
 	}
-	fromDate, err = text.ParseAPISearchDate(fd)
+	fromDate, err = utils.ParseAPISearchDate(fd)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("invalid fromDate: %s", fd), http.StatusBadRequest)
 		return
@@ -161,7 +161,7 @@ func (h *FeedHandler) SearchFeedItems(w http.ResponseWriter, r *http.Request) {
 	if td == "" {
 		td = "2100-12-01"
 	}
-	toDate, err = text.ParseAPISearchDate(td)
+	toDate, err = utils.ParseAPISearchDate(td)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("invalid toDate: %s", td), http.StatusBadRequest)
 		return

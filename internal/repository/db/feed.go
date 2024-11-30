@@ -7,7 +7,7 @@ import (
 	"llrss/internal/models"
 	"llrss/internal/models/db"
 	"llrss/internal/repository"
-	"llrss/internal/text"
+	"llrss/internal/utils"
 	"strings"
 
 	"gorm.io/gorm"
@@ -24,6 +24,13 @@ func NewGormFeedRepository(d *gorm.DB) repository.FeedRepository {
 	return &gormFeedRepository{d: d}
 }
 
+// ForUser is a Scope for a query with user selected.
+func ForUser(userId uint64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("user_id = ?", userId)
+	}
+}
+
 func (r *gormFeedRepository) GetFeed(_ context.Context, id string) (*db.Feed, error) {
 	var feed db.Feed
 	res := r.d.First(&feed, "id = ?", id)
@@ -38,7 +45,7 @@ func (r *gormFeedRepository) GetFeed(_ context.Context, id string) (*db.Feed, er
 
 func (r *gormFeedRepository) GetFeedByURL(_ context.Context, url string) (*db.Feed, error) {
 	var feed db.Feed
-	id := text.URLToID(url)
+	id := utils.URLToID(url)
 
 	res := r.d.First(&feed, "id = ?", id)
 	if res.Error != nil {
@@ -51,17 +58,6 @@ func (r *gormFeedRepository) GetFeedByURL(_ context.Context, url string) (*db.Fe
 }
 
 func (r *gormFeedRepository) ListFeeds(_ context.Context, userId uint64) ([]db.Feed, error) {
-	// var items []Item
-	//  query := db.Joins("JOIN user_items ON items.id = user_items.item_id").
-	//      Where("user_items.user_id = ?", userID)
-	//
-	//  if unreadOnly {
-	//      query = query.Where("user_items.is_read = ?", false)
-	//  }
-	//
-	//  err := query.Order("pub_date DESC").Find(&items).Error
-	//  return items, err
-
 	var feeds []db.Feed
 	if userId == 0 {
 		res := r.d.Find(&feeds)
@@ -79,30 +75,41 @@ func (r *gormFeedRepository) ListFeeds(_ context.Context, userId uint64) ([]db.F
 }
 
 func (r *gormFeedRepository) SaveFeed(ctx context.Context, userId uint64, feed *db.Feed) (string, error) {
-	feed.ID = text.URLToID(feed.URL)
+	feed.ID = utils.URLToID(feed.URL)
 
 	// I want to process and save feed items myself after the feed is saved
 	items := feed.Items
 	feed.Items = nil
 
-	res := r.d.Create(feed)
+	res := r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(feed)
 	if res.Error != nil {
 		return "", res.Error
 	}
 
-	err := r.SaveFeedItems(ctx, feed.ID, items)
+	// Assign it to a user, if any
+	if userId != 0 {
+		res = r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&db.UserFeed{
+			UserID: userId,
+			FeedID: feed.ID,
+		})
+		if res.Error != nil {
+			return "", res.Error
+		}
+	}
+
+	err := r.SaveFeedItems(ctx, feed.ID, userId, items)
 	if err != nil {
 		fmt.Printf("failed to save feed items: %v\n", err)
 	}
 	return feed.ID, nil
 }
 
-func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, items []db.Item) error {
+func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, userId uint64, items []db.Item) error {
 	for _, item := range items {
-		item.ID = text.URLToID(item.Link)
+		item.ID = utils.URLToID(item.Link)
 		item.FeedID = feedID
 		item.Title = strings.TrimSpace(item.Title)
-		item.Description = text.CleanDescription(item.Description)
+		item.Description = utils.CleanDescription(item.Description)
 
 		// NOTE: If multiple feeds try to create the same item (URL as ID), we don't add it but neither fail
 		res := r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&item)
@@ -110,17 +117,34 @@ func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, ite
 			fmt.Printf("failed to save item: %v\n", res.Error)
 			continue
 		}
+
+		// Assign it to a user, if any
+		if userId != 0 {
+			res = r.d.Clauses(clause.OnConflict{DoNothing: true}).Create(&db.UserItem{
+				UserID: userId,
+				ItemID: item.ID,
+			})
+			if res.Error != nil {
+				return res.Error
+			}
+		}
 	}
 	return nil
 }
 
 func (r *gormFeedRepository) DeleteFeed(_ context.Context, userId uint64, id string) error {
+	if userId == 0 {
+		return fmt.Errorf("userId is required")
+	}
+
 	return r.d.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("feed_id = ?", id).Delete(&db.Item{}).Error; err != nil {
+		err := tx.Scopes(ForUser(userId)).Where("feed_id = ?", id).Delete(&db.UserFeed{}).Error
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
 
-		if err := tx.Delete(&db.Feed{}, "id = ?", id).Error; err != nil {
+		err = tx.Scopes(ForUser(userId)).Where("feed_id = ?", id).Delete(&db.UserItem{}).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
 
@@ -151,48 +175,54 @@ func (r *gormFeedRepository) UpdateFeedItem(_ context.Context, s *db.Item) error
 	return r.d.Save(s).Error
 }
 
-func (r *gormFeedRepository) SearchFeedItems(_ context.Context, params models.SearchParams) ([]db.Item, int64, error) {
+func (r *gormFeedRepository) SearchFeedItems(_ context.Context, userId uint64, params models.SearchParams) ([]db.Item, int64, error) {
 	var items []db.Item
 	var total int64
 	var err error
 
-	// Start building the query
-	query := r.d.Model(&db.Item{})
+	if userId == 0 {
+		return nil, 0, fmt.Errorf("userId is required")
+	}
 
-	// Apply text search if query is provided
+	// First of all join with user items.
+	query := r.d.Model(&db.Item{}).
+		Joins("JOIN user_items ON items.id = user_items.item_id").
+		Where("user_items.user_id = ?", userId)
+
+	// Apply unread filter - note that is_read now comes from user_items.
+	if params.Unread {
+		query = query.Where("user_items.is_read = ?", false)
+	}
+
+	// Apply text search if query is provided.
 	if params.Query != "" {
 		searchPattern := "%" + params.Query + "%"
 		query = query.Where(
-			"title LIKE ? OR description LIKE ? OR author LIKE ? OR category LIKE ?",
+			"items.title LIKE ? OR items.description LIKE ? OR items.author LIKE ? OR items.category LIKE ?",
 			searchPattern, searchPattern, searchPattern, searchPattern,
 		)
 	}
 
-	// Apply unread filter
-	if params.Unread {
-		query = query.Where("is_read = ?", false)
-	}
+	// Apply date range.
+	query = query.Where("items.pub_date BETWEEN ? AND ?", params.FromDate, params.ToDate)
 
-	// Apply date range
-	query = query.Where("pub_date BETWEEN ? AND ?", params.FromDate, params.ToDate)
-
-	// Count total before applying pagination
+	// Count total before applying pagination.
 	err = query.Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Apply sorting
+	// Apply sorting.
 	if params.Sort == "asc" {
-		query = query.Order("pub_date asc")
+		query = query.Order("items.pub_date asc")
 	} else {
-		query = query.Order("pub_date desc")
+		query = query.Order("items.pub_date desc")
 	}
 
-	// Apply pagination
+	// Apply pagination.
 	query = query.Offset(params.Offset).Limit(params.Limit)
 
-	// Execute the final query
+	// Execute the final query.
 	err = query.Find(&items).Debug().Error
 	if err != nil {
 		return nil, 0, err

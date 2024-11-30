@@ -1,4 +1,4 @@
-package text
+package utils
 
 import (
 	"bytes"
