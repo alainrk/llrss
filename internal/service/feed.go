@@ -23,12 +23,12 @@ type FeedService interface {
 	FetchFeed(ctx context.Context, url string) (*db.Feed, error)
 	GetFeed(ctx context.Context, id string) (*db.Feed, error)
 	GetFeedByURL(ctx context.Context, url string) (*db.Feed, error)
-	ListFeeds(ctx context.Context) ([]db.Feed, error)
-	AddFeed(ctx context.Context, url string) (string, error)
-	DeleteFeed(ctx context.Context, id string) error
+	ListFeeds(ctx context.Context, userId uint64) ([]db.Feed, error)
+	AddFeed(ctx context.Context, userId uint64, url string) (string, error)
+	DeleteFeed(ctx context.Context, userId uint64, id string) error
 	UpdateFeed(ctx context.Context, feed *db.Feed) error
-	MarkFeedItemRead(ctx context.Context, feedItemID string, read bool) error
-	SearchFeedItems(ctx context.Context, items models.SearchParams) ([]db.Item, int64, error)
+	MarkFeedItemRead(ctx context.Context, userId uint64, feedItemID string, read bool) error
+	SearchFeedItems(ctx context.Context, userId uint64, items models.SearchParams) ([]db.Item, int64, error)
 	RefreshFeeds(ctx context.Context) error
 	Nuke(ctx context.Context) error
 }
@@ -115,23 +115,24 @@ func (s *feedService) GetFeedByURL(ctx context.Context, url string) (*db.Feed, e
 	return s.repo.GetFeedByURL(ctx, url)
 }
 
-func (s *feedService) ListFeeds(ctx context.Context) ([]db.Feed, error) {
-	return s.repo.ListFeeds(ctx)
+func (s *feedService) ListFeeds(ctx context.Context, userId uint64) ([]db.Feed, error) {
+	return s.repo.ListFeeds(ctx, userId)
 }
 
 // AddFeed adds a new feed by url and returns its ID.
-func (s *feedService) AddFeed(ctx context.Context, url string) (string, error) {
+func (s *feedService) AddFeed(ctx context.Context, userId uint64, url string) (string, error) {
 	f, _ := s.repo.GetFeedByURL(ctx, url)
 	if f != nil {
 		return f.ID, nil
 	}
 
+	// TODO: If already existing and last fetched recently we're good
 	feed, err := s.FetchFeed(ctx, url)
 	if err != nil {
 		return "", fmt.Errorf("fetch feed: %w", err)
 	}
 
-	id, err := s.repo.SaveFeed(ctx, feed)
+	id, err := s.repo.SaveFeed(ctx, userId, feed)
 	if err != nil {
 		return "", fmt.Errorf("save feed: %w", err)
 	}
@@ -139,16 +140,16 @@ func (s *feedService) AddFeed(ctx context.Context, url string) (string, error) {
 	return id, nil
 }
 
-func (s *feedService) DeleteFeed(ctx context.Context, id string) error {
-	return s.repo.DeleteFeed(ctx, id)
+func (s *feedService) DeleteFeed(ctx context.Context, userId uint64, id string) error {
+	return s.repo.DeleteFeed(ctx, userId, id)
 }
 
 func (s *feedService) UpdateFeed(ctx context.Context, feed *db.Feed) error {
 	return s.repo.UpdateFeed(ctx, feed)
 }
 
-func (s *feedService) MarkFeedItemRead(ctx context.Context, feedItemID string, read bool) error {
-	i, err := s.repo.GetFeedItem(ctx, feedItemID)
+func (s *feedService) MarkFeedItemRead(ctx context.Context, userId uint64, feedItemID string, read bool) error {
+	i, err := s.repo.GetUserItem(ctx, userId, feedItemID)
 	if err != nil {
 		return err
 	}
@@ -156,7 +157,7 @@ func (s *feedService) MarkFeedItemRead(ctx context.Context, feedItemID string, r
 	// TODO: Here for each user we need to create an item and set the read there
 	// i.IsRead = read
 
-	return s.repo.UpdateFeedItem(ctx, i)
+	return s.repo.UpdateUserFeedItem(ctx, userId, i)
 }
 
 func (s *feedService) SearchFeedItems(ctx context.Context, params models.SearchParams) ([]db.Item, int64, error) {

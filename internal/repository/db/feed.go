@@ -50,16 +50,35 @@ func (r *gormFeedRepository) GetFeedByURL(_ context.Context, url string) (*db.Fe
 	return &feed, nil
 }
 
-func (r *gormFeedRepository) ListFeeds(_ context.Context) ([]db.Feed, error) {
+func (r *gormFeedRepository) ListFeeds(_ context.Context, userId uint64) ([]db.Feed, error) {
+	// var items []Item
+	//  query := db.Joins("JOIN user_items ON items.id = user_items.item_id").
+	//      Where("user_items.user_id = ?", userID)
+	//
+	//  if unreadOnly {
+	//      query = query.Where("user_items.is_read = ?", false)
+	//  }
+	//
+	//  err := query.Order("pub_date DESC").Find(&items).Error
+	//  return items, err
+
 	var feeds []db.Feed
-	res := r.d.Find(&feeds)
-	if res.Error != nil {
-		return nil, res.Error
+	if userId == 0 {
+		res := r.d.Find(&feeds)
+		if res.Error != nil {
+			return nil, res.Error
+		}
+		return feeds, nil
 	}
-	return feeds, nil
+
+	query := r.d.Joins("JOIN user_feeds ON feeds.id = user_feeds.feed_id").
+		Where("user_feeds.user_id = ?", userId)
+
+	err := query.Order("pub_date DESC").Find(&feeds).Error
+	return feeds, err
 }
 
-func (r *gormFeedRepository) SaveFeed(ctx context.Context, feed *db.Feed) (string, error) {
+func (r *gormFeedRepository) SaveFeed(ctx context.Context, userId uint64, feed *db.Feed) (string, error) {
 	feed.ID = text.URLToID(feed.URL)
 
 	// I want to process and save feed items myself after the feed is saved
@@ -95,7 +114,7 @@ func (r *gormFeedRepository) SaveFeedItems(_ context.Context, feedID string, ite
 	return nil
 }
 
-func (r *gormFeedRepository) DeleteFeed(_ context.Context, id string) error {
+func (r *gormFeedRepository) DeleteFeed(_ context.Context, userId uint64, id string) error {
 	return r.d.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("feed_id = ?", id).Delete(&db.Item{}).Error; err != nil {
 			return err
